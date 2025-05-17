@@ -5,9 +5,10 @@ from fastapi.testclient import TestClient
 from pathlib import Path
 import sys
 import shutil
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from mcp_server import app, extract_images_from_path
+from src.mcp_chart_image_scanner.mcp_server import app, extract_images_from_path
 
 client = TestClient(app)
 

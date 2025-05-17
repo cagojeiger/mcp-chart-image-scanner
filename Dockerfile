@@ -10,13 +10,13 @@ RUN apt-get update && \
 WORKDIR /app
 
 # Copy application files
-COPY extract_docker_images.py mcp_server.py main.py requirements.txt ./
+COPY . /app/
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -e .
 
 # Expose port for MCP server
 EXPOSE 8000
 
 # Run the MCP server
-CMD ["python", "main.py"]
+CMD ["python", "-m", "src.mcp_chart_image_scanner.main"]

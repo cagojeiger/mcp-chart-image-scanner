@@ -3,9 +3,10 @@ import tempfile
 import pytest
 from pathlib import Path
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from extract_docker_images import (
+from src.mcp_chart_image_scanner.extract_docker_images import (
     prepare_chart, helm_dependency_update, helm_template, collect_images
 )
 
