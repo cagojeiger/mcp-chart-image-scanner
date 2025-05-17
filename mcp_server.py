@@ -213,8 +213,18 @@ async def health_check():
 async def startup_event():
     logger.info("Starting Helm Chart Image Scanner MCP server...")
 
+async def run_mcp_server():
+    """
+    MCP 서버를 실행합니다.
+    """
+    from mcp.server.stdio import stdio_server
+    
+    async with stdio_server() as streams:
+        await mcp_server.run(
+            streams[0], streams[1], mcp_server.create_initialization_options()
+        )
+
 if __name__ == "__main__":
     import uvicorn
-    import anyio
     
     uvicorn.run(app, host="0.0.0.0", port=8000)
