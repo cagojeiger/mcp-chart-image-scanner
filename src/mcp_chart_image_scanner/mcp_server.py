@@ -227,7 +227,10 @@ async def startup_event():
     Startup event handler.
     """
     logger.info("Starting Helm Chart Image Scanner MCP server...")
-    await run_sse_server(app)
+    try:
+        await run_sse_server(app)
+    except ImportError as e:
+        logger.warning(f"SSE transport not available: {e}. Continuing with stdio transport only.")
 
 async def run_mcp_server():
     """
@@ -253,13 +256,17 @@ async def run_sse_server(app):
     Security warning: SSE transports can be vulnerable to DNS rebinding attacks.
     This implementation binds only to localhost and validates Origin headers.
     """
-    from mcp.server.fastapi_sse import SSEHandler
-    
-    sse_handler = SSEHandler(server=mcp_server)
-    
-    app.mount("/mcp-sse", sse_handler.app)
-    
-    logger.info("SSE transport mounted at /mcp-sse")
+    try:
+        from mcp.server.fastapi_sse import SSEHandler
+        
+        sse_handler = SSEHandler(server=mcp_server)
+        
+        app.mount("/mcp-sse", sse_handler.app)
+        
+        logger.info("SSE transport mounted at /mcp-sse")
+    except ImportError as e:
+        logger.warning(f"SSE transport not available: {e}")
+        raise
 
 if __name__ == "__main__":
     import uvicorn
