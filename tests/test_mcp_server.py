@@ -1,10 +1,7 @@
 """Tests for the MCP server module."""
 
-import json
-import sys
 from unittest import mock
 
-import pytest
 from fastmcp import FastMCP
 
 from mcp_chart_scanner.server.mcp_server import (

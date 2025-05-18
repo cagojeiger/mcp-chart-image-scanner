@@ -3,14 +3,12 @@
 import argparse
 import logging
 import os
-import pathlib
 import sys
 import tempfile
-from typing import Dict, List, Optional, Union
-from urllib.parse import urlparse
+from typing import List, Optional
 
 import requests
-from fastmcp import Context, FastMCP, Image
+from fastmcp import Context, FastMCP
 
 from mcp_chart_scanner.extract import extract_images_from_chart
 
@@ -32,14 +30,14 @@ def get_usage() -> str:
     return """
     Chart Image Scanner
     ------------------
-    
+
     This tool extracts Docker images from Helm charts.
-    
+
     Available tools:
     - scan_chart_path: Scan a local chart path
     - scan_chart_url: Scan a chart from a URL
     - scan_chart_upload: Scan an uploaded chart file
-    
+
     Example:
     ```
     result = scan_chart_path("/path/to/chart.tgz")
@@ -270,7 +268,7 @@ def main() -> None:
         mcp.run(transport="stdio")
     elif args.transport == "sse":
         logger.info(
-            f"Starting MCP server with SSE transport on {args.host}:{args.port}{args.path}"
+            f"Starting MCP server with SSE transport on\n                {args.host}:{args.port}{args.path}"
         )
         mcp.run(
             transport="sse",

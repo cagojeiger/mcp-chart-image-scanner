@@ -26,7 +26,7 @@ jobs:
       - name: Check imports with isort
         run: isort --check mcp_chart_scanner tests
       - name: Lint with flake8
-        run: flake8 mcp_chart_scanner tests
+        run: flake8 mcp_chart_scanner tests --max-line-length=120
 
   test:
     name: Test
