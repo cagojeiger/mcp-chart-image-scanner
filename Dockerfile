@@ -13,7 +13,7 @@ WORKDIR /app
 COPY . /app/
 
 # Install dependencies using uv
-RUN uv pip install --no-cache-dir -e .
+RUN uv pip install --system --no-cache-dir -e .
 
 # Expose port for MCP server
 EXPOSE 8000
