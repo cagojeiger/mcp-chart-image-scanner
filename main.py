@@ -5,34 +5,16 @@ This file allows running the scanner directly from the repository root.
 """
 import sys
 import os
-import threading
-import asyncio
 import logging
-import uvicorn
+import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
-from src.mcp_chart_image_scanner.mcp_server import app, run_mcp_server
-
-logger = logging.getLogger(__name__)
-
-def start_mcp_server_thread():
-    """
-    Start the MCP server in a separate thread.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_mcp_server())
-
-def main():
-    """Main entry point for the application."""
-    logger.info("Starting Helm Chart Image Scanner servers...")
-    
-    mcp_thread = threading.Thread(target=start_mcp_server_thread)
-    mcp_thread.daemon = True
-    mcp_thread.start()
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+from src.mcp_chart_image_scanner.main import main
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+    )
     main()

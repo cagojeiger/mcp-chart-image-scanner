@@ -11,7 +11,9 @@ startCommand:
       "command": "python",
       "args": [
         "-m",
-        "src.mcp_chart_image_scanner.main"
+        "src.mcp_chart_image_scanner.main",
+        "--transport",
+        "stdio"
       ],
       "env": {
         ...(config.helmPath ? { "HELM_PATH": config.helmPath } : {})

@@ -14,8 +14,6 @@ from typing import List, Optional, Dict, Any, Union
 
 import mcp.types as types
 from mcp.server.lowlevel import Server
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
 
 from src.mcp_chart_image_scanner.extract_docker_images import (
     prepare_chart, helm_dependency_update, helm_template, collect_images
@@ -24,15 +22,8 @@ from src.mcp_chart_image_scanner.extract_docker_images import (
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
-
-app = FastAPI(
-    title="Helm Chart Image Scanner API",
-    description="API for extracting Docker images from Helm charts",
-    version="0.1.0"
-)
 
 mcp_server = Server("helm-chart-image-scanner")
 
@@ -49,14 +40,15 @@ def extract_images_from_path(chart_path: str, values_files: Optional[List[str]] 
     """
     try:
         with tempfile.TemporaryDirectory() as tmp:
-            workdir = Path(tmp)
+            chart_dir = Path(tmp) / "chart"
             
-            chart_root = prepare_chart(Path(chart_path), workdir)
+            # Prepare the chart (extract if tgz or copy directory)
+            chart_dir = prepare_chart(Path(chart_path), chart_dir)
+            
+            helm_dependency_update(chart_dir)
             
             values_paths = [Path(vf) for vf in (values_files or [])]
-            
-            helm_dependency_update(chart_root)
-            rendered = helm_template(chart_root, values_paths)
+            rendered = helm_template(chart_dir, values_paths)
             
             images = collect_images(rendered)
             return images
@@ -77,24 +69,28 @@ async def extract_images_from_upload(chart_data: bytes, values_files: Optional[D
     """
     try:
         with tempfile.TemporaryDirectory() as tmp:
-            workdir = Path(tmp)
+            tmp_path = Path(tmp)
             
-            chart_file = workdir / "chart.tgz"
+            chart_file = tmp_path / "chart.tgz"
             with open(chart_file, "wb") as f:
                 f.write(chart_data)
             
+            chart_dir = tmp_path / "chart"
+            chart_dir.mkdir(exist_ok=True)
+            
+            chart_dir = prepare_chart(chart_file, chart_dir)
+            
             values_paths = []
             if values_files:
-                for filename, content in values_files.items():
-                    values_path = workdir / filename
-                    with open(values_path, "wb") as f:
-                        f.write(content)
-                    values_paths.append(values_path)
+                for filename, data in values_files.items():
+                    values_file = tmp_path / filename
+                    with open(values_file, "wb") as f:
+                        f.write(data)
+                    values_paths.append(values_file)
             
-            chart_root = prepare_chart(chart_file, workdir)
+            helm_dependency_update(chart_dir)
             
-            helm_dependency_update(chart_root)
-            rendered = helm_template(chart_root, values_paths)
+            rendered = helm_template(chart_dir, values_paths)
             
             images = collect_images(rendered)
             return images
@@ -109,26 +105,33 @@ async def call_tool(name: str, arguments: dict) -> List[types.TextContent]:
     """
     if name == "extract_from_path":
         if "chart_path" not in arguments:
-            raise ValueError("Missing required argument 'chart_path'")
+            return [types.TextContent("Error: Missing required parameter 'chart_path'")]
         
         chart_path = arguments["chart_path"]
-        values_files = arguments.get("values_files", [])
+        values_files = arguments.get("values_files")
         
         images = extract_images_from_path(chart_path, values_files)
-        return [types.TextContent(type="text", text="\n".join(images))]
+        return [types.TextContent("\n".join(images))]
     
     elif name == "extract_from_upload":
         if "chart_data" not in arguments:
-            raise ValueError("Missing required argument 'chart_data'")
+            return [types.TextContent("Error: Missing required parameter 'chart_data'")]
         
         chart_data = arguments["chart_data"]
-        values_files = arguments.get("values_files", {})
+        if isinstance(chart_data, str):
+            chart_data = chart_data.encode()
         
-        images = await extract_images_from_upload(chart_data, values_files)
-        return [types.TextContent(type="text", text="\n".join(images))]
+        values_files = arguments.get("values_files")
+        if values_files:
+            values_dict = {k: v.encode() if isinstance(v, str) else v for k, v in values_files.items()}
+        else:
+            values_dict = None
+        
+        images = await extract_images_from_upload(chart_data, values_dict)
+        return [types.TextContent("\n".join(images))]
     
     else:
-        raise ValueError(f"Unknown tool: {name}")
+        return [types.TextContent(f"Error: Unknown tool '{name}'")]
 
 @mcp_server.list_tools()
 async def list_tools() -> List[types.Tool]:
@@ -180,95 +183,85 @@ async def list_tools() -> List[types.Tool]:
         ),
     ]
 
-@app.post("/upload/", response_model=List[str])
-async def upload_chart(
-    chart_file: UploadFile = File(...),
-    values_files: List[UploadFile] = File([])
-):
+async def run_mcp_server_stdio():
     """
-    Extract Docker image list from uploaded Helm chart file.
+    Run the MCP server with stdio transport.
+    
+    This function starts a stdio transport server for the MCP server,
+    which enables communication through standard input and output streams.
     """
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            workdir = Path(tmp)
-            
-            chart_path = workdir / chart_file.filename
-            with open(chart_path, "wb") as f:
-                shutil.copyfileobj(chart_file.file, f)
-            
-            values_paths = []
-            for vf in values_files:
-                values_path = workdir / vf.filename
-                with open(values_path, "wb") as f:
-                    shutil.copyfileobj(vf.file, f)
-                values_paths.append(values_path)
-            
-            chart_root = prepare_chart(chart_path, workdir)
-            
-            helm_dependency_update(chart_root)
-            rendered = helm_template(chart_root, values_paths)
-            
-            images = collect_images(rendered)
-            return images
-    except Exception as e:
-        logger.error(f"Error processing API upload: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/health")
-async def health_check():
-    """
-    Health check endpoint for monitoring.
-    """
-    return {"status": "healthy", "service": "mcp-chart-image-scanner"}
-
-@app.on_event("startup")
-async def startup_event():
-    """
-    Startup event handler.
-    """
-    logger.info("Starting Helm Chart Image Scanner MCP server...")
-    try:
-        await run_sse_server(app)
+        from mcp.server.stdio import stdio_server
+        
+        async with stdio_server() as streams:
+            await mcp_server.serve(
+                streams[0], streams[1], mcp_server.create_initialization_options()
+            )
     except ImportError as e:
-        logger.warning(f"SSE transport not available: {e}. Continuing with stdio transport only.")
+        logger.error(f"stdio transport not available: {e}")
+        raise
 
-async def run_mcp_server():
-    """
-    Run the MCP server.
-    
-    This function starts the stdio transport server.
-    """
-    from mcp.server.stdio import stdio_server
-    
-    async with stdio_server() as streams:
-        await mcp_server.run(
-            streams[0], streams[1], mcp_server.create_initialization_options()
-        )
-
-async def run_sse_server(app):
+async def run_mcp_server_sse(host: str = "127.0.0.1", port: int = 8000):
     """
     Run the MCP server with SSE transport.
     
-    This sets up Server-Sent Events (SSE) transport for the MCP server,
-    which enables server-to-client streaming with HTTP POST requests
-    for client-to-server communication.
+    This function starts a Server-Sent Events (SSE) transport server for the MCP server,
+    which enables server-to-client streaming with HTTP POST requests for client-to-server
+    communication.
     
     Security warning: SSE transports can be vulnerable to DNS rebinding attacks.
     This implementation binds only to localhost and validates Origin headers.
+    
+    Args:
+        host: Hostname to bind to (default: 127.0.0.1)
+        port: Port to listen on (default: 8000)
     """
     try:
-        from mcp.server.fastapi_sse import SSEHandler
+        from mcp.server.sse import create_sse_app
+        import uvicorn
         
-        sse_handler = SSEHandler(server=mcp_server)
-        
-        app.mount("/mcp-sse", sse_handler.app)
-        
-        logger.info("SSE transport mounted at /mcp-sse")
+        app = create_sse_app(mcp_server)
+        config = uvicorn.Config(app, host=host, port=port)
+        server = uvicorn.Server(config)
+        await server.serve()
     except ImportError as e:
-        logger.warning(f"SSE transport not available: {e}")
-        raise
+        logger.error(f"SSE transport not available: {e}")
+        logger.warning("Continuing with stdio transport only.")
+
+async def main(transport: str = "stdio", host: str = "127.0.0.1", port: int = 8000):
+    """
+    Main entry point for the MCP server.
+    
+    Args:
+        transport: Transport method to use ('stdio', 'sse', or 'both')
+        host: Hostname to bind to for SSE transport (default: 127.0.0.1)
+        port: Port to listen on for SSE transport (default: 8000)
+    """
+    if transport == "stdio":
+        await run_mcp_server_stdio()
+    elif transport == "sse":
+        await run_mcp_server_sse(host, port)
+    elif transport == "both":
+        import asyncio
+        await asyncio.gather(
+            run_mcp_server_stdio(), 
+            run_mcp_server_sse(host, port)
+        )
+    else:
+        raise ValueError(f"Unknown transport method: {transport}")
 
 if __name__ == "__main__":
-    import uvicorn
+    import asyncio
+    import argparse
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    parser = argparse.ArgumentParser(description="MCP Chart Image Scanner")
+    parser.add_argument("--transport", choices=["stdio", "sse", "both"], default="stdio", 
+                        help="Transport method to use (default: stdio)")
+    parser.add_argument("--host", default="127.0.0.1", 
+                        help="Hostname to bind to for SSE transport (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, 
+                        help="Port to listen on for SSE transport (default: 8000)")
+    
+    args = parser.parse_args()
+    
+    asyncio.run(main(args.transport, args.host, args.port))

@@ -1,40 +1,55 @@
 """
 Entry point for the MCP Chart Image Scanner server.
 
-This module starts both the MCP server and the FastAPI server.
+This module starts the MCP server with the specified transport method.
 """
-import threading
+import os
+import sys
 import asyncio
 import logging
-import uvicorn
+import argparse
 
-from src.mcp_chart_image_scanner.mcp_server import app, run_mcp_server
+from src.mcp_chart_image_scanner.mcp_server import main as run_mcp_server
+from src.mcp_chart_image_scanner.health import HealthHandler
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
 logger = logging.getLogger(__name__)
 
-
-def start_mcp_server_thread():
-    """
-    Start the MCP server in a separate thread.
+def start_health_server(port: int = 8000):
+    """Start a simple HTTP server for health checks."""
+    import socketserver
+    import threading
     
-    This function starts the stdio transport server in a separate thread.
-    The SSE transport is automatically initialized through the FastAPI startup event.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_mcp_server())
-
+    handler = HealthHandler
+    httpd = socketserver.TCPServer(("", port), handler)
+    
+    thread = threading.Thread(target=httpd.serve_forever)
+    thread.daemon = True
+    thread.start()
+    
+    logger.info(f"Health check server started on port {port}")
 
 def main():
     """Main entry point for the application."""
-    logger.info("Starting Helm Chart Image Scanner servers...")
+    parser = argparse.ArgumentParser(description="MCP Chart Image Scanner")
+    parser.add_argument("--transport", choices=["stdio", "sse", "both"], default="both", 
+                        help="Transport method to use (default: both)")
+    parser.add_argument("--host", default="127.0.0.1", 
+                        help="Hostname to bind to for SSE transport (default: 127.0.0.1)")
+    parser.add_argument("--port", type=int, default=8000, 
+                        help="Port to listen on for SSE transport and health checks (default: 8000)")
+    parser.add_argument("--health", action="store_true", 
+                        help="Start health check server (for Docker)")
     
-    mcp_thread = threading.Thread(target=start_mcp_server_thread)
-    mcp_thread.daemon = True
-    mcp_thread.start()
+    args = parser.parse_args()
     
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
+    if args.health:
+        start_health_server(args.port)
+    
+    asyncio.run(run_mcp_server(args.transport, args.host, args.port))
 
 if __name__ == "__main__":
     main()
