@@ -1,0 +1,51 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+categories:
+  - title: '🚀 Features'
+    labels:
+      - 'feat'
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Bug Fixes'
+    labels:
+      - 'fix'
+      - 'bugfix'
+      - 'bug'
+  - title: '🧰 Maintenance'
+    labels:
+      - 'chore'
+      - 'refactor'
+  - title: '📚 Documentation'
+    labels:
+      - 'docs'
+      - 'documentation'
+  - title: '⚡ Performance'
+    labels:
+      - 'perf'
+      - 'performance'
+  - title: '🧪 Tests'
+    labels:
+      - 'test'
+      - 'testing'
+  - title: '🔧 Build System'
+    labels:
+      - 'build'
+      - 'ci'
+
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+template: |
+  ## 변경 사항
+
+  $CHANGES
+
+  ## 설치 방법
+
+  ```bash
+  pip install mcp-chart-scanner
+  ```
+
+  또는 Docker 이미지를 사용:
+
+  ```bash
+  docker pull username/mcp-chart-scanner:v$NEXT_PATCH_VERSION
+  ```
