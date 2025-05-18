@@ -5,7 +5,9 @@ MCP Chart Image Scanner는 Helm 차트에서 Docker 이미지를 추출하기 �
 ## 설치
 
 ```bash
-pip install mcp-chart-scanner
+git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
+cd mcp-chart-image-scanner
+pip install -e .
 ```
 
 ## 사용법

@@ -18,16 +18,12 @@ A tool for extracting Docker image references from Helm charts with CLI and MCP 
 
 ## Installation
 
-### Using pip
+### From Source
 
 ```bash
-pip install mcp-chart-scanner
-```
-
-### Using uv
-
-```bash
-uv pip install mcp-chart-scanner
+git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
+cd mcp-chart-image-scanner
+pip install -e .
 ```
 
 ### Using Docker

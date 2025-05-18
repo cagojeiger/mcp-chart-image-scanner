@@ -75,7 +75,10 @@ jobs:
         uses: actions/checkout@v3
       
       - name: MCP Chart Scanner 설치
-        run: pip install mcp-chart-scanner
+        run: |
+          git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
+          cd mcp-chart-image-scanner
+          pip install -e .
       
       - name: 차트 스캔
         run: |
@@ -98,7 +101,9 @@ scan-chart:
     - curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
     - chmod 700 get_helm.sh
     - ./get_helm.sh
-    - pip install mcp-chart-scanner
+    - git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
+    - cd mcp-chart-image-scanner
+    - pip install -e .
     - chart-scanner ./charts/mychart --json > images.json
   artifacts:
     paths:
