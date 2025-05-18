@@ -5,7 +5,8 @@ import logging
 import os
 import sys
 import tempfile
-from typing import List, Optional
+from importlib import metadata
+from typing import Dict, List, Optional
 
 import requests
 from fastmcp import Context, FastMCP
@@ -20,6 +21,58 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+ERROR_CHART_NOT_FOUND = "Chart path not found: {path}"
+ERROR_CHART_INVALID = "Invalid chart format: {error}"
+ERROR_FILE_NOT_FOUND = "File not found: {error}"
+ERROR_DOWNLOAD_FAILED = "Failed to download chart: {error}"
+ERROR_EMPTY_UPLOAD = "Empty chart data received"
+ERROR_GENERAL = "Error processing chart: {error}"
+ERROR_HELM_NOT_INSTALLED = "오류: Helm CLI가 설치되어 있지 않습니다."
+ERROR_HELM_INSTALL_GUIDE = "Helm CLI 설치 방법: https://helm.sh/docs/intro/install/"
+
+
+async def log_and_raise(
+    error_msg: str, ctx: Optional[Context] = None, exception_type=ValueError
+) -> None:
+    """Log an error message to the context and raise an exception.
+
+    Args:
+        error_msg: Error message to log and raise
+        ctx: MCP context for communication with client
+        exception_type: Type of exception to raise
+    """
+    if ctx:
+        await ctx.error(error_msg)
+    raise exception_type(error_msg)
+
+
+def get_version() -> str:
+    """Get the current package version.
+
+    Returns:
+        Package version string
+    """
+    try:
+        return metadata.version("mcp-chart-scanner")
+    except ImportError:
+        return "unknown"
+
+
+def check_marketplace_compatibility() -> Dict[str, bool]:
+    """Check compatibility with different marketplaces.
+
+    Returns:
+        Dictionary of marketplace compatibility status
+    """
+    compatibility = {"cursor": True, "smithery": True, "reasons": []}
+
+    if not check_helm_cli():
+        compatibility["cursor"] = False
+        compatibility["smithery"] = False
+        compatibility["reasons"].append("Helm CLI not installed")
+
+    return compatibility
+
 
 mcp = FastMCP("Chart Image Scanner")
 
@@ -28,21 +81,34 @@ mcp = FastMCP("Chart Image Scanner")
 def get_usage() -> str:
     """Get usage information."""
     return """
-    Chart Image Scanner
-    ------------------
+    # Chart Image Scanner
 
-    This tool extracts Docker images from Helm charts.
+    This tool extracts Docker images from Helm charts. It supports multiple chart sources:
+    - Local chart files (.tgz or directory)
+    - Remote charts via URL
+    - Uploaded chart files
 
-    Available tools:
-    - scan_chart_path: Scan a local chart path
-    - scan_chart_url: Scan a chart from a URL
-    - scan_chart_upload: Scan an uploaded chart file
-
-    Example:
-    ```
+    Scan a local Helm chart file or directory:
+    ```python
     result = scan_chart_path("/path/to/chart.tgz")
-    print(result)
+    print(result)  # List of Docker images
     ```
+
+    Scan a Helm chart from a URL:
+    ```python
+    result = scan_chart_url("https://example.com/charts/app-1.0.0.tgz")
+    print(result)  # List of Docker images
+    ```
+
+    Scan an uploaded Helm chart:
+    ```python
+    result = scan_chart_upload(chart_data)
+    print(result)  # List of Docker images
+    ```
+
+    All tools support these options:
+    - `values_files`: List of additional values files to use
+    - `normalize`: Whether to normalize image names (default: True)
     """
 
 
