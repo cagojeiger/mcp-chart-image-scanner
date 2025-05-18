@@ -78,7 +78,7 @@ jobs:
         run: |
           git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
           cd mcp-chart-image-scanner
-          pip install -e .
+          pipx install -e .
       
       - name: 차트 스캔
         run: |
@@ -103,7 +103,7 @@ scan-chart:
     - ./get_helm.sh
     - git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
     - cd mcp-chart-image-scanner
-    - pip install -e .
+    - pipx install -e .
     - chart-scanner ./charts/mychart --json > images.json
   artifacts:
     paths:
