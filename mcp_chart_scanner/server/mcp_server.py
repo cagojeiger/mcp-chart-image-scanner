@@ -32,14 +32,17 @@ ERROR_HELM_INSTALL_GUIDE = "Helm CLI 설치 방법: https://helm.sh/docs/intro/i
 
 
 async def log_and_raise(
-    error_msg: str, ctx: Optional[Context] = None, exception_type=ValueError
+    error_msg: str, ctx: Optional[Context] = None, exception_type=Exception
 ) -> None:
     """Log an error message to the context and raise an exception.
 
     Args:
         error_msg: Error message to log and raise
         ctx: MCP context for communication with client
-        exception_type: Type of exception to raise
+        exception_type: Type of exception to raise (default: Exception)
+
+    Raises:
+        Exception: The specified exception type with the error message
     """
     if ctx:
         await ctx.error(error_msg)
@@ -70,6 +73,27 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
         compatibility["cursor"] = False
         compatibility["smithery"] = False
         compatibility["reasons"].append("Helm CLI not installed")
+
+    # Check Python version compatibility
+    import sys
+
+    python_version = sys.version_info
+    if python_version.major < 3 or (
+        python_version.major == 3 and python_version.minor < 8
+    ):
+        compatibility["cursor"] = False
+        compatibility["smithery"] = False
+        compatibility["reasons"].append(
+            f"Python version {python_version.major}.{python_version.minor} not supported (min 3.8)"
+        )
+
+    try:
+        import fastmcp  # noqa: F401
+        import requests  # noqa: F401
+    except ImportError as e:
+        compatibility["cursor"] = False
+        compatibility["smithery"] = False
+        compatibility["reasons"].append(f"Required package missing: {str(e)}")
 
     return compatibility
 
@@ -109,6 +133,14 @@ def get_usage() -> str:
     All tools support these options:
     - `values_files`: List of additional values files to use
     - `normalize`: Whether to normalize image names (default: True)
+
+    All tools provide detailed error messages. You can catch exceptions:
+    ```python
+    try:
+        result = scan_chart_path("/nonexistent/path.tgz")
+    except ValueError as e:
+        print(f"Error: {e}")
+    ```
     """
 
 
@@ -125,14 +157,24 @@ async def scan_chart_path(
         path: Path to the chart (.tgz file or directory)
         values_files: Optional list of values files
         normalize: Whether to normalize image names
+        ctx: MCP context for communication with client
 
     Returns:
         List of Docker images
+
+    Raises:
+        ValueError: If chart is invalid or cannot be processed
+        FileNotFoundError: If chart path or values files not found
     """
     if ctx:
         await ctx.info(f"Scanning chart at path: {path}")
 
     try:
+        if not os.path.exists(path):
+            error_msg = ERROR_CHART_NOT_FOUND.format(path=path)
+            await log_and_raise(error_msg, ctx, FileNotFoundError)
+            return []  # This line will never be reached due to the exception
+
         images = extract_images_from_chart(
             chart_path=path,
             values_files=values_files,
@@ -143,11 +185,14 @@ async def scan_chart_path(
             await ctx.info(f"Found {len(images)} images")
 
         return images
+    except FileNotFoundError as e:
+        error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
     except Exception as e:
-        error_msg = f"Error scanning chart: {str(e)}"
-        if ctx:
-            await ctx.error(error_msg)
-        raise ValueError(error_msg)
+        error_msg = ERROR_GENERAL.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
 
 
 @mcp.tool()
@@ -163,47 +208,62 @@ async def scan_chart_url(
         url: URL to the chart (.tgz file)
         values_files: Optional list of values files
         normalize: Whether to normalize image names
+        ctx: MCP context for communication with client
 
     Returns:
         List of Docker images
+
+    Raises:
+        ValueError: If chart is invalid or cannot be processed
+        requests.RequestException: If chart download fails
     """
     if ctx:
         await ctx.info(f"Downloading chart from URL: {url}")
 
+    chart_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as tmp_file:
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
+            try:
+                response = requests.get(url, stream=True, timeout=30)
+                response.raise_for_status()
+            except requests.RequestException as e:
+                error_msg = ERROR_DOWNLOAD_FAILED.format(error=str(e))
+                await log_and_raise(error_msg, ctx, ValueError)
+                return []  # This line will never be reached due to the exception
+
             for chunk in response.iter_content(chunk_size=8192):
                 tmp_file.write(chunk)
             tmp_file.flush()
 
             chart_path = tmp_file.name
 
-        try:
-            if ctx:
-                await ctx.info(f"Downloaded chart to: {chart_path}")
+        if ctx:
+            await ctx.info(f"Downloaded chart to: {chart_path}")
 
-            images = extract_images_from_chart(
-                chart_path=chart_path,
-                values_files=values_files,
-                normalize=normalize,
-            )
+        images = extract_images_from_chart(
+            chart_path=chart_path,
+            values_files=values_files,
+            normalize=normalize,
+        )
 
-            if ctx:
-                await ctx.info(f"Found {len(images)} images")
+        if ctx:
+            await ctx.info(f"Found {len(images)} images")
 
-            return images
-        finally:
+        return images
+    except FileNotFoundError as e:
+        error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
+    except Exception as e:
+        error_msg = ERROR_GENERAL.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
+    finally:
+        if chart_path:
             try:
                 os.unlink(chart_path)
             except Exception:
                 pass
-    except Exception as e:
-        error_msg = f"Error scanning chart from URL: {str(e)}"
-        if ctx:
-            await ctx.error(error_msg)
-        raise ValueError(error_msg)
 
 
 @mcp.tool()
@@ -219,13 +279,24 @@ async def scan_chart_upload(
         chart_data: Chart file content (bytes)
         values_files: Optional list of values files
         normalize: Whether to normalize image names
+        ctx: MCP context for communication with client
 
     Returns:
         List of Docker images
+
+    Raises:
+        ValueError: If chart is invalid or cannot be processed
+        RuntimeError: If chart data is corrupted or invalid
     """
     if ctx:
         await ctx.info(f"Processing uploaded chart ({len(chart_data)} bytes)")
 
+    if not chart_data:
+        error_msg = ERROR_EMPTY_UPLOAD
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
+
+    chart_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as tmp_file:
             tmp_file.write(chart_data)
@@ -233,27 +304,30 @@ async def scan_chart_upload(
 
             chart_path = tmp_file.name
 
-        try:
-            images = extract_images_from_chart(
-                chart_path=chart_path,
-                values_files=values_files,
-                normalize=normalize,
-            )
+        images = extract_images_from_chart(
+            chart_path=chart_path,
+            values_files=values_files,
+            normalize=normalize,
+        )
 
-            if ctx:
-                await ctx.info(f"Found {len(images)} images")
+        if ctx:
+            await ctx.info(f"Found {len(images)} images")
 
-            return images
-        finally:
+        return images
+    except FileNotFoundError as e:
+        error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
+    except Exception as e:
+        error_msg = ERROR_GENERAL.format(error=str(e))
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
+    finally:
+        if chart_path:
             try:
                 os.unlink(chart_path)
             except Exception:
                 pass
-    except Exception as e:
-        error_msg = f"Error scanning uploaded chart: {str(e)}"
-        if ctx:
-            await ctx.error(error_msg)
-        raise ValueError(error_msg)
 
 
 def parse_args() -> argparse.Namespace:
@@ -305,14 +379,18 @@ def check_helm_cli() -> bool:
     try:
         import subprocess
 
-        subprocess.run(
+        process = subprocess.run(
             ["helm", "version"],
             check=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
         )
+        version_info = process.stdout.strip()
+        logger.info(f"Helm CLI detected: {version_info}")
         return True
-    except (subprocess.SubprocessError, FileNotFoundError):
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        logger.error(f"Helm CLI check failed: {str(e)}")
         return False
 
 
@@ -320,22 +398,25 @@ def main() -> None:
     """Main entry point for the MCP server."""
     args = parse_args()
 
-    if not check_helm_cli():
-        print("오류: Helm CLI가 설치되어 있지 않습니다.")
-        print("Helm CLI 설치 방법: https://helm.sh/docs/intro/install/")
-        sys.exit(1)
-        return  # Add return to ensure no more code executes after sys.exit in tests
-
     if args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
+    else:
+        logging.getLogger().setLevel(logging.INFO)
+
+    logger.info(f"Starting MCP Chart Image Scanner server v{get_version()}")
+
+    if not check_helm_cli():
+        print(ERROR_HELM_NOT_INSTALLED)
+        print(ERROR_HELM_INSTALL_GUIDE)
+        sys.exit(1)
+        return  # Add return to ensure no more code executes after sys.exit in tests
 
     if args.transport == "stdio":
         logger.info("Starting MCP server with stdio transport")
         mcp.run(transport="stdio")
     elif args.transport == "sse":
-        logger.info(
-            f"Starting MCP server with SSE transport on\n                {args.host}:{args.port}{args.path}"
-        )
+        server_url = f"http://{args.host}:{args.port}{args.path}"
+        logger.info(f"Starting MCP server with SSE transport on {server_url}")
         mcp.run(
             transport="sse",
             host=args.host,

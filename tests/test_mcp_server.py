@@ -2,10 +2,14 @@
 
 from unittest import mock
 
+import pytest
+import pytest_asyncio
+import requests
 from fastmcp import FastMCP
 
 from mcp_chart_scanner.server.mcp_server import (
     check_helm_cli,
+    check_marketplace_compatibility,
     main,
     mcp,
     parse_args,
@@ -21,6 +25,7 @@ def test_mcp_server_initialization():
     assert mcp.name == "Chart Image Scanner"
 
 
+@pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 async def test_scan_chart_path(mock_extract_images):
     """Test scan_chart_path function."""
@@ -49,6 +54,7 @@ async def test_scan_chart_path(mock_extract_images):
     assert result == ["image1", "image2"]
 
 
+@pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 async def test_scan_chart_url(mock_extract_images, mock_requests_get):
@@ -91,6 +97,7 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
     assert result == ["image1", "image2"]
 
 
+@pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 async def test_scan_chart_upload(mock_extract_images):
     """Test scan_chart_upload function."""
@@ -160,7 +167,9 @@ def test_parse_args():
 @mock.patch("subprocess.run")
 def test_check_helm_cli_success(mock_run):
     """Test check_helm_cli function when Helm CLI is installed."""
-    mock_run.return_value = mock.MagicMock()
+    mock_process = mock.MagicMock()
+    mock_process.stdout = "version.BuildInfo"
+    mock_run.return_value = mock_process
 
     result = check_helm_cli()
 
@@ -169,6 +178,7 @@ def test_check_helm_cli_success(mock_run):
         check=True,
         stdout=mock.ANY,
         stderr=mock.ANY,
+        text=True,
     )
     assert result is True
 
@@ -185,6 +195,7 @@ def test_check_helm_cli_failure(mock_run):
         check=True,
         stdout=mock.ANY,
         stderr=mock.ANY,
+        text=True,
     )
     assert result is False
 
@@ -280,3 +291,69 @@ def test_main_unsupported_transport(mock_parse_args, mock_check_helm_cli, mock_e
 
     mock_check_helm_cli.assert_called_once()
     mock_exit.assert_called_once_with(1)
+
+
+@pytest.mark.asyncio
+@mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
+async def test_scan_chart_path_file_not_found(mock_extract_images):
+    """Test scan_chart_path function with non-existent path."""
+    mock_ctx = mock.AsyncMock()
+
+    with mock.patch("os.path.exists", return_value=False):
+        with pytest.raises(FileNotFoundError) as excinfo:
+            await scan_chart_path(
+                path="nonexistent.tgz",
+                ctx=mock_ctx,
+            )
+
+        assert "Chart path not found" in str(excinfo.value)
+        mock_ctx.error.assert_called_once()
+        mock_extract_images.assert_not_called()
+
+
+@pytest.mark.asyncio
+@mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
+async def test_scan_chart_url_request_exception(mock_requests_get):
+    """Test scan_chart_url function with request exception."""
+    mock_requests_get.side_effect = requests.RequestException("Connection error")
+    mock_ctx = mock.AsyncMock()
+
+    with pytest.raises(ValueError) as excinfo:
+        await scan_chart_url(
+            url="http://example.com/chart.tgz",
+            ctx=mock_ctx,
+        )
+
+    assert "Failed to download chart" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_scan_chart_upload_empty_data():
+    """Test scan_chart_upload function with empty data."""
+    mock_ctx = mock.AsyncMock()
+
+    with pytest.raises(ValueError) as excinfo:
+        await scan_chart_upload(
+            chart_data=b"",
+            ctx=mock_ctx,
+        )
+
+    assert "Empty chart data received" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
+def test_check_marketplace_compatibility(mock_check_helm_cli):
+    """Test check_marketplace_compatibility function."""
+    mock_check_helm_cli.return_value = True
+    compat = check_marketplace_compatibility()
+    assert compat["cursor"] is True
+    assert compat["smithery"] is True
+    assert len(compat["reasons"]) == 0
+
+    mock_check_helm_cli.return_value = False
+    compat = check_marketplace_compatibility()
+    assert compat["cursor"] is False
+    assert compat["smithery"] is False
+    assert "Helm CLI not installed" in compat["reasons"]
