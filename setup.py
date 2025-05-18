@@ -13,7 +13,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     install_requires=[
-        "mcp[server]>=1.9.0",
+        "mcp>=1.9.0",
         "fastapi>=0.104.0",
         "uvicorn>=0.23.2",
         "python-multipart",

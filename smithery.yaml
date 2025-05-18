@@ -1,0 +1,19 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      helmPath:
+        type: string
+        description: "Custom path to Helm binary"
+  commandFunction: |
+    (config) => ({
+      "command": "python",
+      "args": [
+        "-m",
+        "src.mcp_chart_image_scanner.main"
+      ],
+      "env": {
+        ...(config.helmPath ? { "HELM_PATH": config.helmPath } : {})
+      }
+    })
