@@ -63,6 +63,10 @@ chart-scanner-server --transport stdio
 chart-scanner-server --transport sse --host 0.0.0.0 --port 8000
 ```
 
+## 버전 관리
+
+이 프로젝트는 시맨틱 버전 관리를 사용합니다. 자세한 내용은 [버전 관리 가이드](./docs/versioning.md)를 참조하세요.
+
 ## Documentation
 
 Complete documentation can be found in the [docs](./docs) directory.
