@@ -84,7 +84,8 @@ def prepare_chart(chart_path: pathlib.Path, workdir: pathlib.Path) -> pathlib.Pa
 
     else:
         raise ValueError(
-            f"Unsupported chart format: {chart_path} (only directory or .tgz file supported)"
+            f"Unsupported chart format: {chart_path}"
+            "(only directory or .tgz file supported)"
         )
 
 
@@ -216,9 +217,9 @@ def normalize_image_name(image: str) -> str:
     Standard format: [REGISTRY_HOST[:PORT]/][NAMESPACE/]REPOSITORY[:TAG][@DIGEST]
 
     Normalization rules:
-    1. Missing registry → apply docker.io (Docker Hub)
-    2. Missing namespace → apply library (Docker Hub only)
-    3. Missing tag → apply latest
+    1. Missing registry -> apply docker.io (Docker Hub)
+    2. Missing namespace -> apply library (Docker Hub only)
+    3. Missing tag -> apply latest
 
     Args:
         image: Original image name
@@ -227,10 +228,10 @@ def normalize_image_name(image: str) -> str:
         Normalized image name
 
     Examples:
-        nginx → docker.io/library/nginx:latest
-        user/repo → docker.io/user/repo:latest
-        nvcr.io/nvidia → nvcr.io/nvidia:latest
-        nvcr.io/nvidia/cuda → nvcr.io/nvidia/cuda:latest
+        nginx -> docker.io/library/nginx:latest
+        user/repo -> docker.io/user/repo:latest
+        nvcr.io/nvidia -> nvcr.io/nvidia:latest
+        nvcr.io/nvidia/cuda -> nvcr.io/nvidia/cuda:latest
     """
     has_digest = "@" in image
     digest_part = ""
@@ -315,7 +316,6 @@ def extract_images_from_chart(
 ) -> List[str]:
     """Extract Docker images from a Helm chart.
 
-    This is the main function that combines all the steps to extract images from a chart.
 
     Args:
         chart_path: Path to the .tgz chart archive or chart directory
