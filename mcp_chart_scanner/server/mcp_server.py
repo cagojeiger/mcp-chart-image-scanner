@@ -232,10 +232,34 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def check_helm_cli() -> bool:
+    """Check if Helm CLI is installed.
+    
+    Returns:
+        True if Helm CLI is installed, False otherwise
+    """
+    try:
+        import subprocess
+        subprocess.run(
+            ["helm", "version"], 
+            check=True, 
+            stdout=subprocess.DEVNULL, 
+            stderr=subprocess.DEVNULL
+        )
+        return True
+    except (subprocess.SubprocessError, FileNotFoundError):
+        return False
+
+
 def main() -> None:
     """Main entry point for the MCP server."""
     args = parse_args()
     
+    if not check_helm_cli():
+        print("오류: Helm CLI가 설치되어 있지 않습니다.")
+        print("Helm CLI 설치 방법: https://helm.sh/docs/intro/install/")
+        sys.exit(1)
+        
     if args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
     
