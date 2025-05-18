@@ -31,9 +31,11 @@ ERROR_HELM_NOT_INSTALLED = "오류: Helm CLI가 설치되어 있지 않습니다
 ERROR_HELM_INSTALL_GUIDE = "Helm CLI 설치 방법: https://helm.sh/docs/intro/install/"
 
 
-async def log_and_raise(error_msg: str, ctx: Optional[Context] = None, exception_type=ValueError) -> None:
+async def log_and_raise(
+    error_msg: str, ctx: Optional[Context] = None, exception_type=ValueError
+) -> None:
     """Log an error message to the context and raise an exception.
-    
+
     Args:
         error_msg: Error message to log and raise
         ctx: MCP context for communication with client
@@ -46,7 +48,7 @@ async def log_and_raise(error_msg: str, ctx: Optional[Context] = None, exception
 
 def get_version() -> str:
     """Get the current package version.
-    
+
     Returns:
         Package version string
     """
@@ -58,21 +60,17 @@ def get_version() -> str:
 
 def check_marketplace_compatibility() -> Dict[str, bool]:
     """Check compatibility with different marketplaces.
-    
+
     Returns:
         Dictionary of marketplace compatibility status
     """
-    compatibility = {
-        "cursor": True,
-        "smithery": True,
-        "reasons": []
-    }
-    
+    compatibility = {"cursor": True, "smithery": True, "reasons": []}
+
     if not check_helm_cli():
         compatibility["cursor"] = False
         compatibility["smithery"] = False
         compatibility["reasons"].append("Helm CLI not installed")
-    
+
     return compatibility
 
 
@@ -84,32 +82,30 @@ def get_usage() -> str:
     """Get usage information."""
     return """
     # Chart Image Scanner
-    
+
     This tool extracts Docker images from Helm charts. It supports multiple chart sources:
     - Local chart files (.tgz or directory)
     - Remote charts via URL
     - Uploaded chart files
-    
-    
+
     Scan a local Helm chart file or directory:
     ```python
     result = scan_chart_path("/path/to/chart.tgz")
     print(result)  # List of Docker images
     ```
-    
+
     Scan a Helm chart from a URL:
     ```python
     result = scan_chart_url("https://example.com/charts/app-1.0.0.tgz")
     print(result)  # List of Docker images
     ```
-    
+
     Scan an uploaded Helm chart:
     ```python
     result = scan_chart_upload(chart_data)
     print(result)  # List of Docker images
     ```
-    
-    
+
     All tools support these options:
     - `values_files`: List of additional values files to use
     - `normalize`: Whether to normalize image names (default: True)
