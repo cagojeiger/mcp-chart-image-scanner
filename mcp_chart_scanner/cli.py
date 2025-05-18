@@ -5,7 +5,6 @@ import json
 import logging
 import pathlib
 import sys
-from typing import List, Optional
 
 from mcp_chart_scanner.extract import extract_images_from_chart
 

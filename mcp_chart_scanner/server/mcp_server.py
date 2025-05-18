@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Union
 from urllib.parse import urlparse
 
 import requests
-from fastmcp import FastMCP, Context, Image
+from fastmcp import Context, FastMCP, Image
 
 from mcp_chart_scanner.extract import extract_images_from_chart
 

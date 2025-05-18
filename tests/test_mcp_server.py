@@ -8,13 +8,13 @@ import pytest
 from fastmcp import FastMCP
 
 from mcp_chart_scanner.server.mcp_server import (
-    mcp,
-    scan_chart_path,
-    scan_chart_url,
-    scan_chart_upload,
-    parse_args,
     check_helm_cli,
     main,
+    mcp,
+    parse_args,
+    scan_chart_path,
+    scan_chart_upload,
+    scan_chart_url,
 )
 
 
