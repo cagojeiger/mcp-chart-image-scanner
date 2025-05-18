@@ -55,8 +55,26 @@ pytest tests/ --cov=src --cov-report=term-missing
 
 ### Testing the MCP Protocol
 
-You can test the MCP protocol by using an MCP client or the `mcp` command-line tool:
+You can test the MCP protocol using either stdio or SSE transport:
+
+#### Testing stdio Transport
 
 ```bash
 python -m mcp.cli connect stdio -- python -m src.mcp_chart_image_scanner.main
 ```
+
+#### Testing SSE Transport
+
+Start the server:
+
+```bash
+python -m src.mcp_chart_image_scanner.main
+```
+
+Then connect to the SSE endpoint:
+
+```bash
+python -m mcp.cli connect sse --url http://127.0.0.1:8000/mcp-sse
+```
+
+You can also use browser developer tools to monitor SSE events by visiting `http://127.0.0.1:8000/mcp-sse/sse`.

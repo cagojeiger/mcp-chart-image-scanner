@@ -27,6 +27,10 @@ uv pip install -e .
 
 ### Using the MCP Protocol
 
+The MCP Chart Image Scanner supports two communication methods:
+
+#### Using stdio Transport (Command Line)
+
 You can use the MCP Chart Image Scanner with any MCP client by configuring it as follows:
 
 ```json
@@ -38,6 +42,20 @@ You can use the MCP Chart Image Scanner with any MCP client by configuring it as
     }
   }
 }
+```
+
+#### Using SSE Transport (Web-based)
+
+For web applications, you can use the SSE transport by connecting to the SSE endpoint:
+
+```javascript
+// Connect to the MCP server using SSE
+const client = new MCPClient({
+  transport: new SSETransport("http://127.0.0.1:8000/mcp-sse")
+});
+
+// List available tools
+const tools = await client.listTools();
 ```
 
 ### Using as a REST API

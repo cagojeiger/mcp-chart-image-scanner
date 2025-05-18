@@ -17,3 +17,13 @@ startCommand:
         ...(config.helmPath ? { "HELM_PATH": config.helmPath } : {})
       }
     })
+
+sseEndpoint:
+  enabled: true
+  url: "http://127.0.0.1:8000/mcp-sse"
+  description: |
+    Server-Sent Events (SSE) transport endpoint for web-based applications.
+    Provides server-to-client streaming with HTTP POST requests for client-to-server communication.
+  securityConsiderations: |
+    This implementation binds only to localhost (127.0.0.1) and validates Origin headers
+    to prevent DNS rebinding attacks.

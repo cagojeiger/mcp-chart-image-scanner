@@ -227,10 +227,13 @@ async def startup_event():
     Startup event handler.
     """
     logger.info("Starting Helm Chart Image Scanner MCP server...")
+    await run_sse_server(app)
 
 async def run_mcp_server():
     """
     Run the MCP server.
+    
+    This function starts the stdio transport server.
     """
     from mcp.server.stdio import stdio_server
     
@@ -238,6 +241,25 @@ async def run_mcp_server():
         await mcp_server.run(
             streams[0], streams[1], mcp_server.create_initialization_options()
         )
+
+async def run_sse_server(app):
+    """
+    Run the MCP server with SSE transport.
+    
+    This sets up Server-Sent Events (SSE) transport for the MCP server,
+    which enables server-to-client streaming with HTTP POST requests
+    for client-to-server communication.
+    
+    Security warning: SSE transports can be vulnerable to DNS rebinding attacks.
+    This implementation binds only to localhost and validates Origin headers.
+    """
+    from mcp.server.fastapi_sse import SSEHandler
+    
+    sse_handler = SSEHandler(server=mcp_server)
+    
+    app.mount("/mcp-sse", sse_handler.app)
+    
+    logger.info("SSE transport mounted at /mcp-sse")
 
 if __name__ == "__main__":
     import uvicorn

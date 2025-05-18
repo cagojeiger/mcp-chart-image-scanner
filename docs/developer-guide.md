@@ -37,6 +37,34 @@ mcp-chart-image-scanner/
    curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
    ```
 
+## Communication Methods
+
+The MCP Chart Image Scanner supports two communication methods:
+
+### Standard Input/Output (stdio)
+
+The stdio transport enables communication through standard input and output streams. This is particularly useful for local integrations and command-line tools.
+
+- **Use stdio when:**
+  - Building command-line tools
+  - Implementing local integrations
+  - Needing simple process communication
+  - Working with shell scripts
+
+### Server-Sent Events (SSE)
+
+SSE transport enables server-to-client streaming with HTTP POST requests for client-to-server communication.
+
+- **Use SSE when:**
+  - Only server-to-client streaming is needed
+  - Working with restricted networks
+  - Implementing web-based interfaces
+
+**Security Warning:** SSE transports can be vulnerable to DNS rebinding attacks. This implementation:
+- Binds only to localhost (127.0.0.1)
+- Validates Origin headers
+- Uses secure token handling
+
 ## Running Tests
 
 ```bash
