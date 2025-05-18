@@ -33,20 +33,13 @@ def parse_cli_args() -> argparse.Namespace:
         help="Additional values.yaml file(s)",
     )
     parser.add_argument(
-        "-q",
-        "--quiet",
-        action="store_true",
-        help="Suppress log messages (stderr)"
+        "-q", "--quiet", action="store_true", help="Suppress log messages (stderr)"
     )
-    parser.add_argument(
-        "--json",
-        action="store_true",
-        help="Output as JSON array"
-    )
+    parser.add_argument("--json", action="store_true", help="Output as JSON array")
     parser.add_argument(
         "--raw",
         action="store_true",
-        help="Output raw image names without normalization"
+        help="Output raw image names without normalization",
     )
     return parser.parse_args()
 
