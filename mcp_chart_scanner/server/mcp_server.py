@@ -172,8 +172,9 @@ async def scan_chart_path(
     try:
         if not os.path.exists(path):
             error_msg = ERROR_CHART_NOT_FOUND.format(path=path)
-            await log_and_raise(error_msg, ctx, FileNotFoundError)
-            return []  # This line will never be reached due to the exception
+            if ctx:
+                await ctx.error(error_msg)
+            raise FileNotFoundError(error_msg)
 
         images = extract_images_from_chart(
             chart_path=path,
@@ -186,13 +187,16 @@ async def scan_chart_path(
 
         return images
     except FileNotFoundError as e:
-        error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        if "Chart path not found" not in str(e):
+            error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
+            await log_and_raise(error_msg, ctx, FileNotFoundError)
+        else:
+            raise
+        return []  # This line will never be reached but satisfies type checker
     except Exception as e:
         error_msg = ERROR_GENERAL.format(error=str(e))
         await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        return []  # This line will never be reached but satisfies type checker
 
 
 @mcp.tool()
@@ -229,7 +233,6 @@ async def scan_chart_url(
             except requests.RequestException as e:
                 error_msg = ERROR_DOWNLOAD_FAILED.format(error=str(e))
                 await log_and_raise(error_msg, ctx, ValueError)
-                return []  # This line will never be reached due to the exception
 
             for chunk in response.iter_content(chunk_size=8192):
                 tmp_file.write(chunk)
@@ -252,12 +255,19 @@ async def scan_chart_url(
         return images
     except FileNotFoundError as e:
         error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        await log_and_raise(error_msg, ctx, FileNotFoundError)
+        return []  # This line will never be reached but satisfies type checker
+    except ValueError as e:
+        if "Failed to download chart" not in str(e):
+            error_msg = ERROR_GENERAL.format(error=str(e))
+            await log_and_raise(error_msg, ctx, ValueError)
+        else:
+            raise
+        return []  # This line will never be reached but satisfies type checker
     except Exception as e:
         error_msg = ERROR_GENERAL.format(error=str(e))
         await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        return []  # This line will never be reached but satisfies type checker
     finally:
         if chart_path:
             try:
@@ -316,12 +326,12 @@ async def scan_chart_upload(
         return images
     except FileNotFoundError as e:
         error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        await log_and_raise(error_msg, ctx, FileNotFoundError)
+        return []  # This line will never be reached but satisfies type checker
     except Exception as e:
         error_msg = ERROR_GENERAL.format(error=str(e))
         await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
+        return []  # This line will never be reached but satisfies type checker
     finally:
         if chart_path:
             try:

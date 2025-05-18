@@ -3,7 +3,6 @@
 from unittest import mock
 
 import pytest
-import pytest_asyncio
 import requests
 from fastmcp import FastMCP
 
@@ -27,9 +26,11 @@ def test_mcp_server_initialization():
 
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_scan_chart_path(mock_extract_images):
+@mock.patch("os.path.exists")
+async def test_scan_chart_path(mock_exists, mock_extract_images):
     """Test scan_chart_path function."""
     mock_extract_images.return_value = ["image1", "image2"]
+    mock_exists.return_value = True  # Mock path exists to avoid FileNotFoundError
 
     mock_ctx = mock.AsyncMock()
 
@@ -69,6 +70,7 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
 
     mock_temp_file = mock.MagicMock()
     mock_temp_file.name = "temp.tgz"
+    mock_temp_file.__enter__.return_value = mock_temp_file
 
     with mock.patch("tempfile.NamedTemporaryFile", return_value=mock_temp_file):
         result = await scan_chart_url(
@@ -79,7 +81,7 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
         )
 
     mock_requests_get.assert_called_once_with(
-        "http://example.com/chart.tgz", stream=True
+        "http://example.com/chart.tgz", stream=True, timeout=30
     )
     mock_response.raise_for_status.assert_called_once()
     mock_extract_images.assert_called_once_with(
@@ -107,6 +109,7 @@ async def test_scan_chart_upload(mock_extract_images):
 
     mock_temp_file = mock.MagicMock()
     mock_temp_file.name = "temp.tgz"
+    mock_temp_file.__enter__.return_value = mock_temp_file
 
     with mock.patch("tempfile.NamedTemporaryFile", return_value=mock_temp_file):
         result = await scan_chart_upload(
