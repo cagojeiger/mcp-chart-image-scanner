@@ -1,7 +1,7 @@
 FROM python:3.12-alpine
 
 # Install Helm and required tools
-RUN apk add --no-cache curl bash && \
+RUN apk add --no-cache curl bash openssl && \
     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash && \
     apk add --no-cache --virtual .build-deps gcc musl-dev && \
     pip install --no-cache-dir uv && \
