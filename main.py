@@ -1,24 +1,23 @@
-from mcp_server import app, run_mcp_server
+from mcp_server import app, mcp_server
 import uvicorn
-import threading
 import asyncio
 import logging
 
 logger = logging.getLogger(__name__)
 
-def start_mcp_server_thread():
+async def start_mcp_server():
     """
-    별도의 스레드에서 MCP 서버를 실행합니다.
+    MCP 서버와 FastAPI 앱을 함께 실행합니다.
     """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(run_mcp_server())
+    mcp_task = asyncio.create_task(mcp_server.serve(host="0.0.0.0", port=8001))
+    
+    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
+    server = uvicorn.Server(config)
+    
+    await server.serve()
+    
+    await mcp_task
 
 if __name__ == "__main__":
     logging.info("Starting Helm Chart Image Scanner servers...")
-    
-    mcp_thread = threading.Thread(target=start_mcp_server_thread)
-    mcp_thread.daemon = True
-    mcp_thread.start()
-    
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    asyncio.run(start_mcp_server())
