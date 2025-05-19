@@ -9,10 +9,8 @@ A tool for extracting Docker image references from Helm charts with CLI and MCP 
 - Model Context Protocol (MCP) server for integration with AI tools
 - Support for multiple input methods:
   - Local file paths
-  - File uploads
   - Remote URLs
 - Support for stdio communication protocol
-- Helm CLI included
 
 ## Installation
 
