@@ -87,7 +87,7 @@ async def main():
         # 사용 가능한 도구 나열
         tools = await client.list_tools()
         print(f"사용 가능한 도구: {tools}")
-        
+
         # 로컬 차트 스캔
         result = await client.call_tool(
             "scan_chart_path",
@@ -97,7 +97,7 @@ async def main():
                 "normalize": True,
             },
         )
-        
+
         # 결과 출력
         print(f"이미지: {result.text}")
 ```

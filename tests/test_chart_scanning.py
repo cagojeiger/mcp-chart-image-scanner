@@ -12,7 +12,9 @@ from mcp_chart_scanner.server.mcp_server import scan_chart_path, scan_chart_url
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
-async def test_scan_chart_path(mock_exists, mock_extract_images):
+async def test_scan_chart_path(
+    mock_exists: mock.MagicMock, mock_extract_images: mock.MagicMock
+) -> None:
     """Test scan_chart_path function."""
     mock_extract_images.return_value = ["image1", "image2"]
     mock_exists.return_value = True  # Mock path exists to avoid FileNotFoundError
@@ -43,7 +45,9 @@ async def test_scan_chart_path(mock_exists, mock_extract_images):
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_scan_chart_url(mock_extract_images, mock_requests_get):
+async def test_scan_chart_url(
+    mock_extract_images: mock.MagicMock, mock_requests_get: mock.MagicMock
+) -> None:
     """Test scan_chart_url function."""
     mock_extract_images.return_value = ["image1", "image2"]
 
@@ -88,7 +92,9 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
 @pytest.mark.asyncio
 @mock.patch("os.unlink")
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_temp_file_cleanup(mock_extract_images, mock_unlink):
+async def test_temp_file_cleanup(
+    mock_extract_images: mock.MagicMock, mock_unlink: mock.MagicMock
+) -> None:
     """Test temporary file cleanup after chart processing."""
     mock_extract_images.return_value = ["image1", "image2"]
     mock_ctx = mock.AsyncMock()
@@ -120,8 +126,11 @@ async def test_temp_file_cleanup(mock_extract_images, mock_unlink):
 @mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
 @mock.patch("tempfile.NamedTemporaryFile")
 async def test_scan_chart_url_cleanup_exception(
-    mock_temp_file, mock_get, mock_extract, mock_unlink
-):
+    mock_temp_file: mock.MagicMock,
+    mock_get: mock.MagicMock,
+    mock_extract: mock.MagicMock,
+    mock_unlink: mock.MagicMock,
+) -> None:
     """Test scan_chart_url cleanup when unlink raises exception."""
     mock_response = mock.MagicMock()
     mock_response.iter_content.return_value = [b"data"]
@@ -154,11 +163,11 @@ async def test_scan_chart_url_cleanup_exception(
 @mock.patch("mcp_chart_scanner.extract.helm_dependency_update")
 @mock.patch("mcp_chart_scanner.extract.collect_images")
 async def test_extract_images_from_chart_tarball_format(
-    mock_collect_images,
-    mock_helm_dependency_update,
-    mock_helm_template,
-    mock_prepare_chart,
-):
+    mock_collect_images: mock.MagicMock,
+    mock_helm_dependency_update: mock.MagicMock,
+    mock_helm_template: mock.MagicMock,
+    mock_prepare_chart: mock.MagicMock,
+) -> None:
     """Test extract_images_from_chart with tarball format."""
     mock_tarball_path = pathlib.Path("/path/to/chart.tgz")
     mock_chart_dir = pathlib.Path("/tmp/extracted_chart")
@@ -180,7 +189,9 @@ async def test_extract_images_from_chart_tarball_format(
 @pytest.mark.asyncio
 @mock.patch("os.path.exists")
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_scan_chart_path_directory_format(mock_extract_images, mock_exists):
+async def test_scan_chart_path_directory_format(
+    mock_extract_images: mock.MagicMock, mock_exists: mock.MagicMock
+) -> None:
     """Test scan_chart_path with directory format."""
     mock_exists.return_value = True
     mock_extract_images.return_value = ["image1:tag1", "image2:tag2"]
