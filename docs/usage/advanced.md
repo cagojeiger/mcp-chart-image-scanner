@@ -2,14 +2,6 @@
 
 이 문서는 MCP Chart Image Scanner의 고급 사용 예제를 제공합니다.
 
-## MCP 서버와 Smithery.ai 사용하기
-
-MCP Chart Image Scanner는 Smithery.ai 마켓플레이스와 호환됩니다. 서버를 Smithery.ai에 배포하고 AI 도구와 함께 사용할 수 있습니다.
-
-### 배포 단계
-
-1. Smithery.ai 문서에 따라 배포합니다.
-
 ## 사용자 정의 클라이언트와 MCP 서버 사용하기
 
 ### Python 클라이언트
@@ -23,7 +15,7 @@ async def main():
         # 사용 가능한 도구 나열
         tools = await client.list_tools()
         print(f"사용 가능한 도구: {tools}")
-        
+
         # 로컬 차트 스캔
         result = await client.call_tool(
             "scan_chart_path",
@@ -33,7 +25,7 @@ async def main():
                 "normalize": True,
             },
         )
-        
+
         # 결과 출력
         print(f"이미지: {result.text}")
 ```
@@ -63,17 +55,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      
+
       - name: MCP Chart Scanner 설치
         run: |
           git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
           cd mcp-chart-image-scanner
           pipx install -e .
-      
+
       - name: 차트 스캔
         run: |
           chart-scanner ./charts/mychart --json > images.json
-      
+
       - name: 결과 업로드
         uses: actions/upload-artifact@v3
         with:

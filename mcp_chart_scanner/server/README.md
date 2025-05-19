@@ -18,7 +18,6 @@
 ## 호환성
 
 - Cursor 호환: stdio 프로토콜 지원
-- Smithery.ai 호환: stdio 프로토콜 지원
 - 알려진 문제: Cursor에서 INFO 로그가 [error] 태그로 표시됨
 
 ## 사용 예제
