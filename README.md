@@ -71,6 +71,7 @@ chart-scanner-server --transport stdio
 
 ## Documentation
 
+For a brief introduction, see the [Quick Start guide](./docs/quickstart.md).
 Complete documentation can be found in the [docs](./docs) directory.
 
 ## License
