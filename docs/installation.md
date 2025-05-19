@@ -21,6 +21,18 @@
    pip install -e .
    ```
 
+개발 의존성까지 한 번에 설치하려면 다음 명령을 사용합니다.
+
+```bash
+make setup
+```
+
+Poetry를 사용한다면 대신 다음 명령을 실행합니다.
+
+```bash
+poetry install
+```
+
 ### 필수 조건
 
 - Helm CLI가 포함되어 있지 않으므로 별도로 설치해야 합니다.

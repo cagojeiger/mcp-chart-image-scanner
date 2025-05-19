@@ -31,6 +31,14 @@ chart-scanner-server --transport stdio
 
 
 
+## Local Development
+
+개발 의존성은 다음 명령으로 설치합니다.
+
+```bash
+make setup
+```
+
 ## Documentation
 
 For a brief introduction, see the [Quick Start guide](./docs/quickstart.md).
