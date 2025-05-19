@@ -15,9 +15,12 @@ MCP 서버는 Helm 차트에서 Docker 이미지를 추출하는 도구를 MCP �
 서버는 다양한 오류 상황을 처리하고 상세한 오류 메시지를 제공합니다:
 
 - 파일 존재 여부 검증: 지정된 경로에 차트 파일이 존재하지 않는 경우
+- URL 형식 검증: URL이 http:// 또는 https://로 시작하지 않는 경우
 - URL 다운로드 오류: 네트워크 연결 실패, 서버 응답 오류 등
-- 업로드 데이터 검증: 빈 데이터, 손상된 데이터 등
+- 업로드 데이터 검증: 빈 데이터, 크기 제한 초과(기본 10MB), 손상된 데이터 등
+- 차트 형식 검증: Chart.yaml 파일이 없는 경우, 유효하지 않은 tarball 형식 등
 - Helm CLI 검증: Helm CLI가 설치되어 있지 않은 경우
+- 임시 파일 관리: 임시 파일 생성 및 작업 완료 후 자동 정리
 
 ## 설치
 
@@ -82,6 +85,7 @@ async def scan_chart_url(
     url: str,
     values_files: Optional[List[str]] = None,
     normalize: bool = True,
+    timeout: int = 30,
 ) -> List[str]:
     """URL에서 Helm 차트를 스캔합니다."""
 ```
@@ -95,6 +99,7 @@ async def scan_chart_upload(
     chart_data: bytes,
     values_files: Optional[List[str]] = None,
     normalize: bool = True,
+    max_size_mb: int = 10,
 ) -> List[str]:
     """업로드된 Helm 차트를 스캔합니다."""
 ```

@@ -348,6 +348,99 @@ async def test_scan_chart_upload_empty_data():
     mock_ctx.error.assert_called_once()
 
 
+@pytest.mark.asyncio
+async def test_scan_chart_url_invalid_url_format():
+    """Test scan_chart_url function with invalid URL format."""
+    mock_ctx = mock.AsyncMock()
+
+    with pytest.raises(ValueError) as excinfo:
+        await scan_chart_url(
+            url="ftp://example.com/chart.tgz",
+            ctx=mock_ctx,
+        )
+
+    assert "Invalid URL format:" in str(excinfo.value)
+    assert "must start with http:// or https://" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_scan_chart_upload_size_limit():
+    """Test scan_chart_upload function with size exceeding limit."""
+    mock_ctx = mock.AsyncMock()
+    
+    max_size_mb = 2
+    chart_data = b"x" * (3 * 1024 * 1024)  # 3MB of data
+
+    with pytest.raises(ValueError) as excinfo:
+        await scan_chart_upload(
+            chart_data=chart_data,
+            max_size_mb=max_size_mb,
+            ctx=mock_ctx,
+        )
+
+    assert "Chart data too large:" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@pytest.mark.asyncio
+@mock.patch("tarfile.open")
+@mock.patch("os.path.exists")
+async def test_scan_chart_upload_invalid_chart_format(mock_exists, mock_tarfile_open):
+    """Test scan_chart_upload function with invalid chart format (no Chart.yaml)."""
+    mock_ctx = mock.AsyncMock()
+    mock_exists.return_value = True
+    
+    mock_tar = mock.MagicMock()
+    mock_tarfile_open.return_value.__enter__.return_value = mock_tar
+    
+    mock_member1 = mock.MagicMock()
+    mock_member1.name = "README.md"
+    mock_member2 = mock.MagicMock()
+    mock_member2.name = "values.yaml"
+    mock_tar.getmembers.return_value = [mock_member1, mock_member2]
+    
+    with (
+        mock.patch("tempfile.NamedTemporaryFile") as mock_temp_file,
+        pytest.raises(ValueError) as excinfo
+    ):
+        mock_temp_file.return_value.__enter__.return_value.name = "temp.tgz"
+        await scan_chart_upload(
+            chart_data=b"chart data",
+            ctx=mock_ctx,
+        )
+
+    assert "Chart.yaml not found in archive" in str(excinfo.value)
+    mock_ctx.error.assert_called_once()
+
+
+@pytest.mark.asyncio
+@mock.patch("os.unlink")
+@mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
+async def test_temp_file_cleanup(mock_extract_images, mock_unlink):
+    """Test temporary file cleanup after chart processing."""
+    mock_extract_images.return_value = ["image1", "image2"]
+    mock_ctx = mock.AsyncMock()
+
+    with (
+        mock.patch("mcp_chart_scanner.server.mcp_server.requests.get") as mock_requests_get,
+        mock.patch("tempfile.NamedTemporaryFile") as mock_temp_file
+    ):
+        mock_response = mock.MagicMock()
+        mock_response.iter_content.return_value = [b"data"]
+        mock_requests_get.return_value = mock_response
+        
+        mock_temp_file.return_value.__enter__.return_value.name = "temp.tgz"
+        
+        await scan_chart_url(
+            url="http://example.com/chart.tgz",
+            ctx=mock_ctx,
+        )
+    
+    mock_unlink.assert_called_once_with("temp.tgz")
+    mock_ctx.info.assert_any_call("Cleaned up temporary file: temp.tgz")
+
+
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
 def test_check_marketplace_compatibility(mock_check_helm_cli):
     """Test check_marketplace_compatibility function."""
