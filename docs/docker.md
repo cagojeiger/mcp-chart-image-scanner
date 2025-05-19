@@ -5,7 +5,7 @@ MCP Chart Image Scanner는 MCP 서버를 실행하기 위한 Docker 이미지를
 ## 특징
 
 - Alpine 기반 이미지
-- Helm CLI 포함
+- Helm CLI 필요(이미지에 포함되지 않음)
 - stdio 프로토콜을 지원하는 MCP 서버
 
 ## 사용법
