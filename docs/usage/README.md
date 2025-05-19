@@ -39,9 +39,6 @@ for image in images:
 ```bash
 # stdio 프로토콜로 서버 시작
 chart-scanner-server --transport stdio
-
-# SSE 프로토콜로 서버 시작
-chart-scanner-server --transport sse --host 0.0.0.0 --port 8000
 ```
 
 ## 고급 사용법

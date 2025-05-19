@@ -28,8 +28,8 @@ MCP Chart Image Scanner는 Smithery.ai 마켓플레이스와 호환됩니다. �
 from fastmcp import Client
 
 async def main():
-    # 서버에 연결
-    async with Client("http://localhost:8000/sse") as client:
+    # 서버에 연결 (stdio)
+    async with Client("chart-scanner-server") as client:
         # 사용 가능한 도구 나열
         tools = await client.list_tools()
         print(f"사용 가능한 도구: {tools}")
