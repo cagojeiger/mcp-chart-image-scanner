@@ -44,8 +44,3 @@ template: |
   pip install mcp-chart-scanner
   ```
 
-  또는 Docker 이미지를 사용:
-
-  ```bash
-  docker pull username/mcp-chart-scanner:v$NEXT_PATCH_VERSION
-  ```
