@@ -411,7 +411,8 @@ async def test_scan_chart_upload_invalid_chart_format(mock_exists, mock_tarfile_
         )
 
     assert "Chart.yaml not found in archive" in str(excinfo.value)
-    mock_ctx.error.assert_called_once()
+    assert mock_ctx.error.call_count > 0
+    assert any("Chart.yaml not found in archive" in str(call) for call in mock_ctx.error.call_args_list)
 
 
 @pytest.mark.asyncio
