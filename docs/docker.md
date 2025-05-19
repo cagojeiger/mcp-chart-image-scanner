@@ -6,7 +6,7 @@ MCP Chart Image Scanner는 MCP 서버를 실행하기 위한 Docker 이미지를
 
 - Alpine 기반 이미지
 - Helm CLI 포함
-- stdio 및 SSE 프로토콜을 지원하는 MCP 서버
+- stdio 프로토콜을 지원하는 MCP 서버
 
 ## 사용법
 
@@ -14,12 +14,6 @@ MCP Chart Image Scanner는 MCP 서버를 실행하기 위한 Docker 이미지를
 
 ```bash
 docker pull <registry>/mcp-chart-scanner:latest
-```
-
-### SSE 프로토콜로 서버 실행
-
-```bash
-docker run -p 8000:8000 <registry>/mcp-chart-scanner:latest
 ```
 
 ### stdio 프로토콜로 서버 실행
@@ -46,4 +40,4 @@ docker build -t <registry>/mcp-chart-scanner:latest .
 
 ## 포트
 
-- `8000`: SSE 프로토콜의 기본 포트
+특별한 노출 포트는 필요하지 않습니다.
