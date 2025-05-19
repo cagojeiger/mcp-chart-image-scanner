@@ -2,7 +2,7 @@
 
 from unittest import mock
 
-from mcp_chart_scanner.server.mcp_server import check_helm_cli
+from mcp_chart_scanner.utils import check_helm_cli
 
 
 @mock.patch("subprocess.run")
