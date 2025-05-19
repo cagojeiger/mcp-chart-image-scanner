@@ -19,14 +19,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 black isort
+          pip install pre-commit
           pip install -e .
-      - name: Check code formatting with Black
-        run: black --check mcp_chart_scanner tests
-      - name: Check imports with isort
-        run: isort --check mcp_chart_scanner tests
-      - name: Lint with flake8
-        run: flake8 mcp_chart_scanner tests --max-line-length=120
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
   test:
     name: Test
