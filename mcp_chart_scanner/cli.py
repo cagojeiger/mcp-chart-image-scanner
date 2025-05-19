@@ -7,6 +7,11 @@ import pathlib
 import sys
 
 from mcp_chart_scanner.extract import extract_images_from_chart
+from mcp_chart_scanner.server.mcp_server import (
+    ERROR_HELM_INSTALL_GUIDE,
+    ERROR_HELM_NOT_INSTALLED,
+    check_helm_cli,
+)
 
 
 def parse_cli_args() -> argparse.Namespace:
@@ -49,6 +54,12 @@ def main() -> None:
 
     if args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
+
+    if not check_helm_cli():
+        print(ERROR_HELM_NOT_INSTALLED)
+        print(ERROR_HELM_INSTALL_GUIDE)
+        sys.exit(1)
+        return
 
     try:
         images = extract_images_from_chart(
