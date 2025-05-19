@@ -37,11 +37,19 @@ def extract_chart(chart_archive: pathlib.Path, dest_dir: pathlib.Path) -> pathli
         The root directory of the extracted chart
 
     Raises:
-        RuntimeError: If the chart structure is unexpected
+        RuntimeError: If an archive member is outside ``dest_dir`` or the
+            chart structure is unexpected
     """
     logger.info(f"Extracting chart archive: {chart_archive}")
+    dest_dir_abs = dest_dir.resolve()
     with tarfile.open(chart_archive, "r:gz") as tar:
-        tar.extractall(dest_dir)
+        for member in tar.getmembers():
+            member_path = (dest_dir_abs / member.name).resolve()
+            if not member_path.is_relative_to(dest_dir_abs):
+                raise RuntimeError(
+                    f"Archive member outside destination directory: {member.name}"
+                )
+            tar.extract(member, dest_dir)
 
     roots = [p for p in dest_dir.iterdir() if p.is_dir()]
     if len(roots) != 1:
