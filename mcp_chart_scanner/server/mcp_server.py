@@ -106,7 +106,7 @@ mcp = FastMCP("Chart Image Scanner")
 @mcp.resource("help://usage")
 def get_usage() -> str:
     """Get usage information."""
-    return """
+    usage = """
     # Chart Image Scanner
 
     This tool extracts Docker images from Helm charts. It supports multiple chart sources:
@@ -137,6 +137,7 @@ def get_usage() -> str:
         print(f"Error: {e}")
     ```
     """
+    return usage
 
 
 @mcp.tool()
