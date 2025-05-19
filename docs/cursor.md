@@ -9,34 +9,25 @@ MCP Chart Image Scanner는 [Cursor](https://cursor.com/) AI 코딩 도구와 호
 
 ## Cursor에서 사용하기
 
-### stdio 프로토콜 사용
-
-Cursor는 stdio 프로토콜을 통해 MCP 서버와 통신할 수 있습니다. 이 방식은 Cursor가 MCP 서버를 직접 실행하고 표준 입출력을 통해 통신하는 방식입니다.
-
-```bash
-chart-scanner-server --transport stdio
-```
-
-## Cursor 설정
-
-Cursor에서 MCP 서버를 설정하는 방법:
-
-1. Cursor 설정 열기
-2. "Model Context Protocol" 섹션으로 이동
-3. 새 MCP 서버 추가
-4. 서버 유형 선택 (stdio)
-5. 서버 정보 입력 (명령어)
-
-## 예제
-
-### stdio 예제
+Cursor는 MCP 서버를 직접 실행하여 stdio 프로토콜로 통신합니다. 설치가 완료되면 다음과 같이 `.cursor.json` 파일에 MCP 서버를 등록합니다.
 
 ```json
 {
-  "name": "Chart Image Scanner",
-  "transport": "stdio",
-  "command": "chart-scanner-server --transport stdio"
+  "mcpServers": {
+    "chart-scanner": {
+      "command": "chart-scanner-server",
+      "args": ["--transport", "stdio"]
+    }
+  }
 }
+```
+
+### MCP 서버 수동 실행
+
+서버를 직접 실행하려면 다음 명령을 사용할 수 있습니다.
+
+```bash
+chart-scanner-server --transport stdio
 ```
 
 ## 문제 해결
