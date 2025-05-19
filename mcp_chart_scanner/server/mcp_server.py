@@ -246,7 +246,9 @@ async def scan_chart_url(
                     tmp_file.write(chunk)
                     downloaded += len(chunk)
                     if total_size > 0 and ctx:
-                        progress_interval = max(1, total_size // 10)  # 0으로 나누기 방지
+                        progress_interval = max(
+                            1, total_size // 10
+                        )  # 0으로 나누기 방지
                         if downloaded % progress_interval < 8192:
                             progress = (downloaded / total_size) * 100
                             await ctx.info(f"Download progress: {progress:.1f}%")
