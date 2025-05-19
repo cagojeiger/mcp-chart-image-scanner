@@ -11,41 +11,7 @@ A tool for extracting Docker image references from Helm charts with CLI and MCP 
   - Local file paths
   - Remote URLs
 - Support for stdio communication protocol
-
-## Installation
-
-### From Source
-
-```bash
-git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
-cd mcp-chart-image-scanner
-pipx install -e .
-```
-
-> **필수**: 이 패키지에는 Helm CLI가 포함되어 있지 않습니다. 사용 전에 Helm CLI를 별도로 설치해야 합니다.
-
-> **주의**: 반드시 루트 디렉토리(`mcp-chart-image-scanner/`)에서 설치해야 합니다. 하위 디렉토리(`mcp_chart_scanner/`)에서 설치하면 실패합니다.
->
-> **참고**: 일부 시스템에서는 "externally-managed-environment" 오류가 발생할 수 있습니다. 이 경우 가상 환경을 생성하거나 `--break-system-packages` 옵션을 사용하세요.
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -e .
-```
-
-설치가 완료되면 아래와 같이 `.cursor.json` 파일에 MCP 서버를 등록해 사용할 수 있습니다.
-
-```json
-{
-  "mcpServers": {
-    "chart-scanner": {
-      "command": "chart-scanner-server",
-      "args": ["--transport", "stdio"]
-    }
-  }
-}
-```
-
+자세한 설치 방법은 [설치 가이드](./docs/installation.md)를 참조하세요.
 
 ## Usage
 

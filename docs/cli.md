@@ -2,22 +2,8 @@
 
 MCP Chart Image Scanner는 Helm 차트에서 Docker 이미지를 추출하기 위한 명령줄 인터페이스를 제공합니다.
 
-## 설치
+설치 방법은 [설치 가이드](./installation.md)를 참조하세요.
 
-```bash
-git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
-cd mcp-chart-image-scanner
-pipx install -e .
-```
-
-> **주의**: 반드시 루트 디렉토리(`mcp-chart-image-scanner/`)에서 설치해야 합니다. 하위 디렉토리(`mcp_chart_scanner/`)에서 설치하면 실패합니다.
->
-> **참고**: 일부 시스템에서는 "externally-managed-environment" 오류가 발생할 수 있습니다. 이 경우 가상 환경을 생성하거나 `--break-system-packages` 옵션을 사용하세요.
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -e .
-```
 
 ## 사용법
 

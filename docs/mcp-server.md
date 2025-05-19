@@ -20,28 +20,11 @@ MCP 서버는 Helm 차트에서 Docker 이미지를 추출하는 도구를 MCP �
 - 차트 형식 검증: Chart.yaml 파일이 없는 경우, 유효하지 않은 tarball 형식 등
 - Helm CLI 검증: Helm CLI가 설치되어 있지 않은 경우
 - 임시 파일 관리: 임시 파일 생성 및 작업 완료 후 자동 정리
-
-## 설치
-
-```bash
-git clone https://github.com/cagojeiger/mcp-chart-image-scanner.git
-cd mcp-chart-image-scanner
-pipx install -e .
-```
-
-> **주의**: 반드시 루트 디렉토리(`mcp-chart-image-scanner/`)에서 설치해야 합니다. 하위 디렉토리(`mcp_chart_scanner/`)에서 설치하면 실패합니다.
->
-> **참고**: 일부 시스템에서는 "externally-managed-environment" 오류가 발생할 수 있습니다. 이 경우 가상 환경을 생성하거나 `--break-system-packages` 옵션을 사용하세요.
-```bash
-python -m venv venv
-source venv/bin/activate
-pip install -e .
-```
+설치 방법은 [설치 가이드](./installation.md)를 참조하세요.
 
 ## 서버 시작하기
 
 ### stdio 프로토콜
-
 ```bash
 chart-scanner-server --transport stdio
 ```
