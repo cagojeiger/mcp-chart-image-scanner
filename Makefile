@@ -81,15 +81,4 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	@echo "Clean complete."
 
-# Help target
-help:
-	@echo "Available targets:"
-	@echo "  setup    - Install dependencies and Helm"
-	@echo "  lint     - Run linting checks (black, isort, flake8)"
-	@echo "  test     - Run tests with pytest"
-	@echo "  build    - Build the package"
-	@echo "  all      - Run lint, test, and build"
-	@echo "  clean    - Remove build artifacts"
-	@echo "  helm     - Install Helm CLI if not already installed"
-	@echo "  venv     - Create virtual environment"
-	@echo "  help     - Show this help message"
+# This help target is now at the beginning of the file as the default target
