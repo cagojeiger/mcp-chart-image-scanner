@@ -112,11 +112,10 @@ def get_usage() -> str:
     This tool extracts Docker images from Helm charts. It supports multiple chart sources:
     - Local chart files (.tgz or directory)
     - Remote charts via URL
-    - Uploaded chart files
 
     Scan a local Helm chart file or directory:
     ```python
-    result = scan_chart_path("/path/to/chart.tgz")
+    result = scan_chart_path("/path/to/chart.tgz")  # Always use absolute paths
     print(result)  # List of Docker images
     ```
 
@@ -126,14 +125,8 @@ def get_usage() -> str:
     print(result)  # List of Docker images
     ```
 
-    Scan an uploaded Helm chart:
-    ```python
-    result = scan_chart_upload(chart_data)
-    print(result)  # List of Docker images
-    ```
-
     All tools support these options:
-    - `values_files`: List of additional values files to use
+    - `values_files`: List of additional values files to use (should be absolute paths)
     - `normalize`: Whether to normalize image names (default: True)
 
     All tools provide detailed error messages. You can catch exceptions:
@@ -156,8 +149,8 @@ async def scan_chart_path(
     """Scan a local Helm chart for Docker images.
 
     Args:
-        path: Path to the chart (.tgz file or directory)
-        values_files: Optional list of values files
+        path: Absolute path to the chart (.tgz file or directory). Relative paths may cause errors.
+        values_files: Optional list of values files (should be absolute paths)
         normalize: Whether to normalize image names
         ctx: MCP context for communication with client
 
@@ -213,7 +206,7 @@ async def scan_chart_url(
 
     Args:
         url: URL to the chart (.tgz file)
-        values_files: Optional list of values files
+        values_files: Optional list of values files (should be absolute paths)
         normalize: Whether to normalize image names
         timeout: Timeout in seconds for the HTTP request (default: 30)
         ctx: MCP context for communication with client
@@ -300,119 +293,6 @@ async def scan_chart_url(
                     )
 
 
-@mcp.tool()
-async def scan_chart_upload(
-    chart_data: bytes,
-    values_files: Optional[List[str]] = None,
-    normalize: bool = True,
-    max_size_mb: int = 10,  # 기본 최대 크기: 10MB
-    ctx: Context = None,
-) -> List[str]:
-    """Scan an uploaded Helm chart.
-
-    Args:
-        chart_data: Chart file content (bytes)
-        values_files: Optional list of values files
-        normalize: Whether to normalize image names
-        max_size_mb: Maximum allowed chart size in MB (default: 10)
-        ctx: MCP context for communication with client
-
-    Returns:
-        List of Docker images
-
-    Raises:
-        ValueError: If chart is invalid or cannot be processed
-        RuntimeError: If chart data is corrupted or invalid
-    """
-    if ctx:
-        await ctx.info(f"Processing uploaded chart ({len(chart_data)} bytes)")
-
-    if not chart_data:
-        error_msg = ERROR_EMPTY_UPLOAD
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
-
-    max_bytes = max_size_mb * 1024 * 1024
-    if len(chart_data) > max_bytes:
-        error_msg = ERROR_DATA_TOO_LARGE.format(
-            size=len(chart_data), max_size=max_bytes
-        )
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached due to the exception
-
-    chart_path = None
-    try:
-        with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as tmp_file:
-            tmp_file.write(chart_data)
-            tmp_file.flush()
-            chart_path = tmp_file.name
-
-            try:
-                import tarfile
-
-                if os.path.exists(chart_path):
-                    with tarfile.open(chart_path, "r:gz") as tar:
-                        chart_yaml_found = False
-                        for member in tar.getmembers():
-                            if member.name.endswith(
-                                "Chart.yaml"
-                            ) or member.name.endswith("/Chart.yaml"):
-                                chart_yaml_found = True
-                                break
-
-                        if not chart_yaml_found:
-                            error_msg = ERROR_CHART_INVALID.format(
-                                error="Chart.yaml not found in archive"
-                            )
-                            await log_and_raise(error_msg, ctx, ValueError)
-                else:
-                    if "pytest" in sys.modules:
-                        if ctx:
-                            await ctx.info(
-                                "Skipping tarfile validation in test environment"
-                            )
-                    else:
-                        error_msg = ERROR_FILE_NOT_FOUND.format(
-                            error=f"Chart file not found: {chart_path}"
-                        )
-                        await log_and_raise(error_msg, ctx, FileNotFoundError)
-            except tarfile.ReadError as e:
-                error_msg = ERROR_CHART_INVALID.format(
-                    error=f"Invalid archive format: {str(e)}"
-                )
-                await log_and_raise(error_msg, ctx, ValueError)
-
-        images = extract_images_from_chart(
-            chart_path=chart_path,
-            values_files=values_files,
-            normalize=normalize,
-        )
-
-        if ctx:
-            await ctx.info(f"Found {len(images)} images")
-
-        return images
-    except FileNotFoundError as e:
-        error_msg = ERROR_FILE_NOT_FOUND.format(error=str(e))
-        await log_and_raise(error_msg, ctx, FileNotFoundError)
-        return []  # This line will never be reached but satisfies type checker
-    except Exception as e:
-        error_msg = ERROR_GENERAL.format(error=str(e))
-        await log_and_raise(error_msg, ctx, ValueError)
-        return []  # This line will never be reached but satisfies type checker
-    finally:
-        if chart_path:
-            try:
-                os.unlink(chart_path)
-                if ctx:
-                    await ctx.info(f"Cleaned up temporary file: {chart_path}")
-            except Exception as e:
-                if ctx:
-                    await ctx.warn(
-                        f"Failed to clean up temporary file {chart_path}: {str(e)}"
-                    )
-
-
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the MCP server.
 
@@ -424,25 +304,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--transport",
-        choices=["stdio", "sse"],
+        choices=["stdio"],
         default="stdio",
-        help="Transport protocol (stdio or sse)",
-    )
-    parser.add_argument(
-        "--host",
-        default="127.0.0.1",
-        help="Host to bind to (for sse transport)",
-    )
-    parser.add_argument(
-        "--port",
-        type=int,
-        default=8000,
-        help="Port to bind to (for sse transport)",
-    )
-    parser.add_argument(
-        "--path",
-        default="/sse",
-        help="Path for SSE endpoint (for sse transport)",
+        help="Transport protocol (stdio only)",
     )
     parser.add_argument(
         "-q",
@@ -496,16 +360,14 @@ def main() -> None:
 
     if args.transport == "stdio":
         logger.info("Starting MCP server with stdio transport")
+        try:
+            mcp.remove_tool("scan_chart_upload")
+        except (AttributeError, KeyError, Exception) as e:
+            logger.warning(f"Using fallback method to disable tools: {str(e)}")
+            if hasattr(mcp, "tools") and isinstance(mcp.tools, dict):
+                mcp.tools.pop("scan_chart_upload", None)
+        logger.info("Tool 'scan_chart_upload' is disabled")
         mcp.run(transport="stdio")
-    elif args.transport == "sse":
-        server_url = f"http://{args.host}:{args.port}{args.path}"
-        logger.info(f"Starting MCP server with SSE transport on {server_url}")
-        mcp.run(
-            transport="sse",
-            host=args.host,
-            port=args.port,
-            path=args.path,
-        )
     else:
         logger.error(f"Unsupported transport: {args.transport}")
         sys.exit(1)

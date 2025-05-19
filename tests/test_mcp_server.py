@@ -13,7 +13,6 @@ from mcp_chart_scanner.server.mcp_server import (
     mcp,
     parse_args,
     scan_chart_path,
-    scan_chart_upload,
     scan_chart_url,
 )
 
@@ -100,50 +99,11 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
     assert result == ["image1", "image2"]
 
 
-@pytest.mark.asyncio
-@mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_scan_chart_upload(mock_extract_images):
-    """Test scan_chart_upload function."""
-    mock_extract_images.return_value = ["image1", "image2"]
-
-    mock_ctx = mock.AsyncMock()
-
-    mock_temp_file = mock.MagicMock()
-    mock_temp_file.name = "temp.tgz"
-    mock_temp_file.__enter__.return_value = mock_temp_file
-
-    with mock.patch("tempfile.NamedTemporaryFile", return_value=mock_temp_file):
-        result = await scan_chart_upload(
-            chart_data=b"chart data",
-            values_files=["values.yaml"],
-            normalize=True,
-            ctx=mock_ctx,
-        )
-
-    mock_temp_file.write.assert_called_once_with(b"chart data")
-    mock_extract_images.assert_called_once_with(
-        chart_path="temp.tgz",
-        values_files=["values.yaml"],
-        normalize=True,
-    )
-    mock_ctx.info.assert_has_calls(
-        [
-            mock.call("Processing uploaded chart (10 bytes)"),
-            mock.call("Found 2 images"),
-        ],
-        any_order=True,
-    )
-    assert result == ["image1", "image2"]
-
-
 def test_parse_args():
     """Test parse_args function."""
     with mock.patch("sys.argv", ["chart-scanner-server"]):
         args = parse_args()
         assert args.transport == "stdio"
-        assert args.host == "127.0.0.1"
-        assert args.port == 8000
-        assert args.path == "/sse"
         assert not args.quiet
 
     with mock.patch(
@@ -151,21 +111,12 @@ def test_parse_args():
         [
             "chart-scanner-server",
             "--transport",
-            "sse",
-            "--host",
-            "0.0.0.0",
-            "--port",
-            "9000",
-            "--path",
-            "/mcp",
+            "stdio",
             "--quiet",
         ],
     ):
         args = parse_args()
-        assert args.transport == "sse"
-        assert args.host == "0.0.0.0"
-        assert args.port == 9000
-        assert args.path == "/mcp"
+        assert args.transport == "stdio"
         assert args.quiet
 
 
@@ -254,32 +205,6 @@ def test_main_stdio(mock_parse_args, mock_check_helm_cli, mock_mcp_run):
     mock_mcp_run.assert_called_once_with(transport="stdio")
 
 
-@mock.patch("mcp_chart_scanner.server.mcp_server.mcp.run")
-@mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
-@mock.patch("mcp_chart_scanner.server.mcp_server.parse_args")
-def test_main_sse(mock_parse_args, mock_check_helm_cli, mock_mcp_run):
-    """Test main function with SSE transport."""
-    mock_args = mock.MagicMock()
-    mock_args.transport = "sse"
-    mock_args.host = "0.0.0.0"
-    mock_args.port = 9000
-    mock_args.path = "/mcp"
-    mock_args.quiet = False
-    mock_parse_args.return_value = mock_args
-
-    mock_check_helm_cli.return_value = True
-
-    main()
-
-    mock_check_helm_cli.assert_called_once()
-    mock_mcp_run.assert_called_once_with(
-        transport="sse",
-        host="0.0.0.0",
-        port=9000,
-        path="/mcp",
-    )
-
-
 @mock.patch("mcp_chart_scanner.server.mcp_server.sys.exit")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
 @mock.patch("mcp_chart_scanner.server.mcp_server.parse_args")
@@ -334,21 +259,6 @@ async def test_scan_chart_url_request_exception(mock_requests_get):
 
 
 @pytest.mark.asyncio
-async def test_scan_chart_upload_empty_data():
-    """Test scan_chart_upload function with empty data."""
-    mock_ctx = mock.AsyncMock()
-
-    with pytest.raises(ValueError) as excinfo:
-        await scan_chart_upload(
-            chart_data=b"",
-            ctx=mock_ctx,
-        )
-
-    assert "Empty chart data received" in str(excinfo.value)
-    mock_ctx.error.assert_called_once()
-
-
-@pytest.mark.asyncio
 async def test_scan_chart_url_invalid_url_format():
     """Test scan_chart_url function with invalid URL format."""
     mock_ctx = mock.AsyncMock()
@@ -362,60 +272,6 @@ async def test_scan_chart_url_invalid_url_format():
     assert "Invalid URL format:" in str(excinfo.value)
     assert "must start with http:// or https://" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_scan_chart_upload_size_limit():
-    """Test scan_chart_upload function with size exceeding limit."""
-    mock_ctx = mock.AsyncMock()
-
-    max_size_mb = 2
-    chart_data = b"x" * (3 * 1024 * 1024)  # 3MB of data
-
-    with pytest.raises(ValueError) as excinfo:
-        await scan_chart_upload(
-            chart_data=chart_data,
-            max_size_mb=max_size_mb,
-            ctx=mock_ctx,
-        )
-
-    assert "Chart data too large:" in str(excinfo.value)
-    mock_ctx.error.assert_called_once()
-
-
-@pytest.mark.asyncio
-@mock.patch("tarfile.open")
-@mock.patch("os.path.exists")
-async def test_scan_chart_upload_invalid_chart_format(mock_exists, mock_tarfile_open):
-    """Test scan_chart_upload function with invalid chart format (no Chart.yaml)."""
-    mock_ctx = mock.AsyncMock()
-    mock_exists.return_value = True
-
-    mock_tar = mock.MagicMock()
-    mock_tarfile_open.return_value.__enter__.return_value = mock_tar
-
-    mock_member1 = mock.MagicMock()
-    mock_member1.name = "README.md"
-    mock_member2 = mock.MagicMock()
-    mock_member2.name = "values.yaml"
-    mock_tar.getmembers.return_value = [mock_member1, mock_member2]
-
-    with (
-        mock.patch("tempfile.NamedTemporaryFile") as mock_temp_file,
-        pytest.raises(ValueError) as excinfo,
-    ):
-        mock_temp_file.return_value.__enter__.return_value.name = "temp.tgz"
-        await scan_chart_upload(
-            chart_data=b"chart data",
-            ctx=mock_ctx,
-        )
-
-    assert "Chart.yaml not found in archive" in str(excinfo.value)
-    assert mock_ctx.error.call_count > 0
-    assert any(
-        "Chart.yaml not found in archive" in str(call)
-        for call in mock_ctx.error.call_args_list
-    )
 
 
 @pytest.mark.asyncio

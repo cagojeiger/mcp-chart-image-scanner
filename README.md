@@ -11,10 +11,8 @@ A tool for extracting Docker image references from Helm charts with CLI and MCP 
   - Local file paths
   - File uploads
   - Remote URLs
-- Support for multiple communication protocols:
-  - stdio protocol
-  - Server-Sent Events (SSE) protocol
-- Alpine-based Docker image with Helm CLI included
+- Support for stdio communication protocol
+- Helm CLI included
 
 ## Installation
 
@@ -57,11 +55,7 @@ chart-scanner <path-to-chart> [-f values.yaml] [--json] [--quiet]
 chart-scanner-server --transport stdio
 ```
 
-#### Starting the server with SSE protocol
 
-```bash
-chart-scanner-server --transport sse --host 0.0.0.0 --port 8000
-```
 
 ## 버전 관리
 
