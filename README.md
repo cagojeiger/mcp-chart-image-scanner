@@ -31,6 +31,19 @@ source venv/bin/activate
 pip install -e .
 ```
 
+설치가 완료되면 아래와 같이 `.cursor.json` 파일에 MCP 서버를 등록해 사용할 수 있습니다.
+
+```json
+{
+  "mcpServers": {
+    "chart-scanner": {
+      "command": "chart-scanner-server",
+      "args": ["--transport", "stdio"]
+    }
+  }
+}
+```
+
 ### Using Docker
 
 ```bash
