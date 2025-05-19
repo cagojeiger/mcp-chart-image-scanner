@@ -434,8 +434,9 @@ async def test_extract_images_from_chart_tarball_format(
     mock_prepare_chart,
 ):
     """Test extract_images_from_chart with tarball format."""
-    from mcp_chart_scanner.extract import extract_images_from_chart
     import pathlib
+
+    from mcp_chart_scanner.extract import extract_images_from_chart
 
     mock_tarball_path = pathlib.Path("/path/to/chart.tgz")
     mock_chart_dir = pathlib.Path("/tmp/extracted_chart")

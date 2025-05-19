@@ -76,9 +76,9 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
         compatibility["reasons"].append("Helm CLI not installed")
 
     # Check Python version compatibility
-    import sys
     import os
     import pathlib
+    import sys
     import tempfile
 
     python_version = sys.version_info
