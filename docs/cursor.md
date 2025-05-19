@@ -18,6 +18,8 @@ Cursor는 stdio 프로토콜을 통해 MCP 서버와 통신할 수 있습니다.
 chart-scanner-server --transport stdio
 ```
 
+> **참고**: stdio 모드에서는 `scan_chart_upload` 도구가 비활성화됩니다.
+
 ### SSE 프로토콜 사용
 
 Cursor는 SSE(Server-Sent Events) 프로토콜을 통해 MCP 서버와 통신할 수 있습니다. 이 방식은 Cursor가 HTTP를 통해 MCP 서버에 연결하는 방식입니다.
@@ -25,6 +27,8 @@ Cursor는 SSE(Server-Sent Events) 프로토콜을 통해 MCP 서버와 통신할
 ```bash
 chart-scanner-server --transport sse --host 0.0.0.0 --port 8000
 ```
+
+> **참고**: SSE 모드에서는 `scan_chart_path` 도구가 비활성화됩니다.
 
 ## Cursor 설정
 
@@ -63,3 +67,5 @@ Cursor에서 MCP 서버를 설정하는 방법:
 - **연결 오류**: Cursor가 MCP 서버에 연결할 수 없는 경우, 서버가 실행 중인지 확인하고 방화벽 설정을 확인하세요.
 - **명령 오류**: 명령이 실행되지 않는 경우, 패키지가 올바르게 설치되었는지 확인하세요.
 - **권한 오류**: 파일 접근 권한 오류가 발생하는 경우, 적절한 권한이 설정되어 있는지 확인하세요.
+- **경로 오류**: 항상 절대 경로를 사용하세요. 상대 경로는 오류를 발생시킬 수 있습니다.
+- **로깅 표시 오류**: Cursor에서 INFO 로그가 [error] 태그로 표시될 수 있습니다. 이는 알려진 문제이며 로그 내용에는 영향을 미치지 않습니다.

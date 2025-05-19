@@ -4,7 +4,7 @@
 
 ## 주요 기능
 
-- `scan_chart_path`: 로컬 Helm 차트에서 Docker 이미지 스캔
+- `scan_chart_path`: 로컬 Helm 차트에서 Docker 이미지 스캔 (절대 경로 필요)
 - `scan_chart_url`: URL에서 Helm 차트 다운로드 및 스캔
 - `scan_chart_upload`: 업로드된 Helm 차트 스캔
 
@@ -14,10 +14,13 @@
 - URL 다운로드 오류 처리
 - 업로드된 차트 데이터 검증
 - Helm CLI 존재 확인
+- 경로 처리: 모든 경로는 절대 경로를 사용해야 함
 
 ## 호환성
 
 - Cursor 호환: stdio 및 SSE 프로토콜 지원
+  - stdio 모드: scan_chart_upload 비활성화됨
+  - SSE 모드: scan_chart_path 비활성화됨
 - Smithery.ai 호환: Docker 패키징, stdio 및 SSE 프로토콜 지원
 
 ## 사용 예제
@@ -30,7 +33,7 @@ async def main():
         result = await client.call_tool(
             "scan_chart_path",
             {
-                "path": "/path/to/chart.tgz",
+                "path": "/path/to/chart.tgz",  # 절대 경로 사용
                 "normalize": True,
             },
         )

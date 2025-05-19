@@ -156,8 +156,8 @@ async def scan_chart_path(
     """Scan a local Helm chart for Docker images.
 
     Args:
-        path: Path to the chart (.tgz file or directory)
-        values_files: Optional list of values files
+        path: Absolute path to the chart (.tgz file or directory). Relative paths may cause errors.
+        values_files: Optional list of values files (should be absolute paths)
         normalize: Whether to normalize image names
         ctx: MCP context for communication with client
 
@@ -213,7 +213,7 @@ async def scan_chart_url(
 
     Args:
         url: URL to the chart (.tgz file)
-        values_files: Optional list of values files
+        values_files: Optional list of values files (should be absolute paths)
         normalize: Whether to normalize image names
         timeout: Timeout in seconds for the HTTP request (default: 30)
         ctx: MCP context for communication with client
@@ -312,7 +312,7 @@ async def scan_chart_upload(
 
     Args:
         chart_data: Chart file content (bytes)
-        values_files: Optional list of values files
+        values_files: Optional list of values files (should be absolute paths)
         normalize: Whether to normalize image names
         max_size_mb: Maximum allowed chart size in MB (default: 10)
         ctx: MCP context for communication with client
@@ -496,10 +496,14 @@ def main() -> None:
 
     if args.transport == "stdio":
         logger.info("Starting MCP server with stdio transport")
+        mcp.tools.pop("scan_chart_upload", None)
+        logger.info("Tool 'scan_chart_upload' is disabled in stdio mode")
         mcp.run(transport="stdio")
     elif args.transport == "sse":
         server_url = f"http://{args.host}:{args.port}{args.path}"
         logger.info(f"Starting MCP server with SSE transport on {server_url}")
+        mcp.tools.pop("scan_chart_path", None)
+        logger.info("Tool 'scan_chart_path' is disabled in SSE mode")
         mcp.run(
             transport="sse",
             host=args.host,

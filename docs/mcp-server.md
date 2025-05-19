@@ -47,11 +47,15 @@ pip install -e .
 chart-scanner-server --transport stdio
 ```
 
+> **참고**: stdio 모드에서는 `scan_chart_upload` 도구가 비활성화됩니다.
+
 ### SSE 프로토콜
 
 ```bash
 chart-scanner-server --transport sse --host 0.0.0.0 --port 8000 --path /sse
 ```
+
+> **참고**: SSE 모드에서는 `scan_chart_path` 도구가 비활성화됩니다.
 
 ## 옵션
 
@@ -69,8 +73,8 @@ chart-scanner-server --transport sse --host 0.0.0.0 --port 8000 --path /sse
 
 ```python
 async def scan_chart_path(
-    path: str,
-    values_files: Optional[List[str]] = None,
+    path: str,  # 절대 경로를 사용해야 함
+    values_files: Optional[List[str]] = None,  # 절대 경로를 사용해야 함
     normalize: bool = True,
 ) -> List[str]:
     """로컬 Helm 차트에서 Docker 이미지를 스캔합니다."""
@@ -83,7 +87,7 @@ URL에서 Helm 차트를 스캔합니다.
 ```python
 async def scan_chart_url(
     url: str,
-    values_files: Optional[List[str]] = None,
+    values_files: Optional[List[str]] = None,  # 절대 경로를 사용해야 함
     normalize: bool = True,
     timeout: int = 30,
 ) -> List[str]:
@@ -97,7 +101,7 @@ async def scan_chart_url(
 ```python
 async def scan_chart_upload(
     chart_data: bytes,
-    values_files: Optional[List[str]] = None,
+    values_files: Optional[List[str]] = None,  # 절대 경로를 사용해야 함
     normalize: bool = True,
     max_size_mb: int = 10,
 ) -> List[str]:
