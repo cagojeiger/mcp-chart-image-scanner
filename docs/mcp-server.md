@@ -8,7 +8,6 @@ MCP 서버는 Helm 차트에서 Docker 이미지를 추출하는 도구를 MCP �
 
 - 로컬 Helm 차트 파일(.tgz) 또는 디렉토리에서 이미지 추출
 - URL에서 Helm 차트 다운로드 및 이미지 추출
-- 업로드된 Helm 차트 데이터에서 이미지 추출
 
 ## 오류 처리 기능
 
@@ -17,7 +16,7 @@ MCP 서버는 Helm 차트에서 Docker 이미지를 추출하는 도구를 MCP �
 - 파일 존재 여부 검증: 지정된 경로에 차트 파일이 존재하지 않는 경우
 - URL 형식 검증: URL이 http:// 또는 https://로 시작하지 않는 경우
 - URL 다운로드 오류: 네트워크 연결 실패, 서버 응답 오류 등
-- 업로드 데이터 검증: 빈 데이터, 크기 제한 초과(기본 10MB), 손상된 데이터 등
+
 - 차트 형식 검증: Chart.yaml 파일이 없는 경우, 유효하지 않은 tarball 형식 등
 - Helm CLI 검증: Helm CLI가 설치되어 있지 않은 경우
 - 임시 파일 관리: 임시 파일 생성 및 작업 완료 후 자동 정리
@@ -47,22 +46,9 @@ pip install -e .
 chart-scanner-server --transport stdio
 ```
 
-> **참고**: stdio 모드에서는 `scan_chart_upload` 도구가 비활성화됩니다.
-
-### SSE 프로토콜
-
-```bash
-chart-scanner-server --transport sse --host 0.0.0.0 --port 8000 --path /sse
-```
-
-> **참고**: SSE 모드에서는 `scan_chart_path` 도구가 비활성화됩니다.
-
 ## 옵션
 
-- `--transport`: 전송 프로토콜 (stdio 또는 sse)
-- `--host`: 바인딩할 호스트 (sse 전송용)
-- `--port`: 바인딩할 포트 (sse 전송용)
-- `--path`: SSE 엔드포인트 경로 (sse 전송용)
+- `--transport`: 전송 프로토콜 (stdio만 지원)
 - `-q, --quiet`: 로그 메시지 숨기기
 
 ## 사용 가능한 도구
@@ -94,19 +80,7 @@ async def scan_chart_url(
     """URL에서 Helm 차트를 스캔합니다."""
 ```
 
-### `scan_chart_upload`
 
-업로드된 Helm 차트를 스캔합니다.
-
-```python
-async def scan_chart_upload(
-    chart_data: bytes,
-    values_files: Optional[List[str]] = None,  # 절대 경로를 사용해야 함
-    normalize: bool = True,
-    max_size_mb: int = 10,
-) -> List[str]:
-    """업로드된 Helm 차트를 스캔합니다."""
-```
 
 ## 사용 가능한 리소스
 

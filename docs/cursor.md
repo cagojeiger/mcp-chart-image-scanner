@@ -5,7 +5,6 @@ MCP Chart Image Scanner는 [Cursor](https://cursor.com/) AI 코딩 도구와 호
 ## 요구사항
 
 - MCP 서버는 stdio 프로토콜을 지원해야 합니다.
-- MCP 서버는 SSE 프로토콜을 지원해야 합니다.
 - MCP 서버는 표준 MCP 프로토콜을 준수해야 합니다.
 
 ## Cursor에서 사용하기
@@ -18,18 +17,6 @@ Cursor는 stdio 프로토콜을 통해 MCP 서버와 통신할 수 있습니다.
 chart-scanner-server --transport stdio
 ```
 
-> **참고**: stdio 모드에서는 `scan_chart_upload` 도구가 비활성화됩니다.
-
-### SSE 프로토콜 사용
-
-Cursor는 SSE(Server-Sent Events) 프로토콜을 통해 MCP 서버와 통신할 수 있습니다. 이 방식은 Cursor가 HTTP를 통해 MCP 서버에 연결하는 방식입니다.
-
-```bash
-chart-scanner-server --transport sse --host 0.0.0.0 --port 8000
-```
-
-> **참고**: SSE 모드에서는 `scan_chart_path` 도구가 비활성화됩니다.
-
 ## Cursor 설정
 
 Cursor에서 MCP 서버를 설정하는 방법:
@@ -37,8 +24,8 @@ Cursor에서 MCP 서버를 설정하는 방법:
 1. Cursor 설정 열기
 2. "Model Context Protocol" 섹션으로 이동
 3. 새 MCP 서버 추가
-4. 서버 유형 선택 (stdio 또는 SSE)
-5. 서버 정보 입력 (명령어 또는 URL)
+4. 서버 유형 선택 (stdio)
+5. 서버 정보 입력 (명령어)
 
 ## 예제
 
@@ -49,16 +36,6 @@ Cursor에서 MCP 서버를 설정하는 방법:
   "name": "Chart Image Scanner",
   "transport": "stdio",
   "command": "chart-scanner-server --transport stdio"
-}
-```
-
-### SSE 예제
-
-```json
-{
-  "name": "Chart Image Scanner",
-  "transport": "sse",
-  "url": "http://localhost:8000/sse"
 }
 ```
 
