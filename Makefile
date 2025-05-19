@@ -1,7 +1,7 @@
 # Makefile for mcp-chart-image-scanner
 # Allows running CI checks locally
 
-.PHONY: setup lint test build all clean helm venv
+.PHONY: setup lint test build all clean helm venv help
 
 PYTHON_VERSION := 3.10
 PROJECT_DIR := mcp_chart_scanner
@@ -9,6 +9,19 @@ TEST_DIR := tests
 VENV_DIR := venv
 
 # Default target
+help:
+	@echo "Available targets:"
+	@echo "  setup    - Install dependencies and Helm"
+	@echo "  lint     - Run linting checks (black, isort, flake8)"
+	@echo "  test     - Run tests with pytest"
+	@echo "  build    - Build the package"
+	@echo "  all      - Run lint, test, and build"
+	@echo "  clean    - Remove build artifacts"
+	@echo "  helm     - Install Helm CLI if not already installed"
+	@echo "  venv     - Create virtual environment"
+	@echo "  help     - Show this help message"
+
+# Run all CI checks
 all: lint test build
 
 # Setup virtual environment
