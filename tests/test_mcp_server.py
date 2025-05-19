@@ -282,17 +282,19 @@ async def test_scan_chart_path_invalid_format(mock_exists, mock_extract_images):
     mock_exists.return_value = True
     mock_extract_images.side_effect = ValueError("Unsupported chart format")
     mock_ctx = mock.AsyncMock()
-    
+
     with pytest.raises(ValueError) as excinfo:
         await scan_chart_path(
             path="/path/to/invalid.txt",
             ctx=mock_ctx,
         )
-    
-    assert "Unsupported chart format" in str(excinfo.value) or "Error processing chart" in str(excinfo.value)
+
+    assert "Unsupported chart format" in str(
+        excinfo.value
+    ) or "Error processing chart" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
-    
-    
+
+
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
@@ -301,14 +303,14 @@ async def test_scan_chart_path_values_file_not_found(mock_exists, mock_extract_i
     mock_exists.return_value = True
     mock_extract_images.side_effect = FileNotFoundError("Values file not found")
     mock_ctx = mock.AsyncMock()
-    
+
     with pytest.raises(FileNotFoundError) as excinfo:
         await scan_chart_path(
             path="/path/to/chart.tgz",
             values_files=["/nonexistent/values.yaml"],
             ctx=mock_ctx,
         )
-    
+
     assert "File not found" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
 
@@ -319,17 +321,17 @@ async def test_scan_chart_path_values_file_not_found(mock_exists, mock_extract_i
 async def test_scan_chart_path_helm_cli_error(mock_exists, mock_extract_images):
     """Test scan_chart_path with Helm CLI error."""
     import subprocess
-    
+
     mock_exists.return_value = True
     mock_extract_images.side_effect = subprocess.CalledProcessError(1, "helm template")
     mock_ctx = mock.AsyncMock()
-    
+
     with pytest.raises(ValueError) as excinfo:
         await scan_chart_path(
             path="/path/to/chart.tgz",
             ctx=mock_ctx,
         )
-    
+
     assert "Error processing chart" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
 
@@ -368,27 +370,29 @@ async def test_temp_file_cleanup(mock_extract_images, mock_unlink):
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
 @mock.patch("tempfile.NamedTemporaryFile")
-async def test_scan_chart_url_cleanup_exception(mock_temp_file, mock_get, mock_extract, mock_unlink):
+async def test_scan_chart_url_cleanup_exception(
+    mock_temp_file, mock_get, mock_extract, mock_unlink
+):
     """Test scan_chart_url cleanup when unlink raises exception."""
     mock_response = mock.MagicMock()
     mock_response.iter_content.return_value = [b"data"]
     mock_get.return_value = mock_response
     mock_extract.return_value = ["image1", "image2"]
-    
+
     mock_file = mock.MagicMock()
     mock_file.name = "temp.tgz"
     mock_file.__enter__.return_value = mock_file
     mock_temp_file.return_value = mock_file
-    
+
     mock_unlink.side_effect = OSError("Permission denied")
-    
+
     mock_ctx = mock.AsyncMock()
-    
+
     result = await scan_chart_url(
         url="http://example.com/chart.tgz",
         ctx=mock_ctx,
     )
-    
+
     assert result == ["image1", "image2"]
     mock_unlink.assert_called_once_with("temp.tgz")
     mock_ctx.warn.assert_called_once()
@@ -401,17 +405,19 @@ async def test_scan_chart_url_cleanup_exception(mock_temp_file, mock_get, mock_e
 async def test_scan_chart_path_missing_chart_yaml(mock_exists, mock_extract_images):
     """Test scan_chart_path function with missing Chart.yaml."""
     mock_extract_images.side_effect = ValueError("Not a valid Helm chart directory")
-    
+
     mock_exists.return_value = True
     mock_ctx = mock.AsyncMock()
-    
+
     with pytest.raises(ValueError) as excinfo:
         await scan_chart_path(
             path="/invalid/chart/dir",
             ctx=mock_ctx,
         )
-    
-    assert "Not a valid Helm chart directory" in str(excinfo.value) or "Error processing chart" in str(excinfo.value)
+
+    assert "Not a valid Helm chart directory" in str(
+        excinfo.value
+    ) or "Error processing chart" in str(excinfo.value)
     mock_ctx.error.assert_called_once()
     mock_extract_images.assert_called_once()
 
@@ -422,22 +428,25 @@ async def test_scan_chart_path_missing_chart_yaml(mock_exists, mock_extract_imag
 @mock.patch("mcp_chart_scanner.extract.helm_dependency_update")
 @mock.patch("mcp_chart_scanner.extract.collect_images")
 async def test_extract_images_from_chart_tarball_format(
-    mock_collect_images, mock_helm_dependency_update, mock_helm_template, mock_prepare_chart
+    mock_collect_images,
+    mock_helm_dependency_update,
+    mock_helm_template,
+    mock_prepare_chart,
 ):
     """Test extract_images_from_chart with tarball format."""
     from mcp_chart_scanner.extract import extract_images_from_chart
     import pathlib
-    
+
     mock_tarball_path = pathlib.Path("/path/to/chart.tgz")
     mock_chart_dir = pathlib.Path("/tmp/extracted_chart")
-    
+
     with mock.patch("tempfile.TemporaryDirectory"):
         mock_prepare_chart.return_value = mock_chart_dir
         mock_helm_template.return_value = "yaml: content"
         mock_collect_images.return_value = ["image1:tag1", "image2:tag2"]
-        
+
         result = extract_images_from_chart(mock_tarball_path)
-        
+
         assert result == ["image1:tag1", "image2:tag2"]
         mock_prepare_chart.assert_called_once()
         mock_helm_dependency_update.assert_called_once()
@@ -453,12 +462,12 @@ async def test_scan_chart_path_directory_format(mock_extract_images, mock_exists
     mock_exists.return_value = True
     mock_extract_images.return_value = ["image1:tag1", "image2:tag2"]
     mock_ctx = mock.AsyncMock()
-    
+
     result = await scan_chart_path(
         path="/path/to/chart/dir",
         ctx=mock_ctx,
     )
-    
+
     assert result == ["image1:tag1", "image2:tag2"]
     mock_extract_images.assert_called_with(
         chart_path="/path/to/chart/dir",
@@ -472,18 +481,20 @@ async def test_scan_chart_path_directory_format(mock_extract_images, mock_exists
 @mock.patch("mcp_chart_scanner.server.mcp_server.os")
 @mock.patch("mcp_chart_scanner.server.mcp_server.sys")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
-def test_check_marketplace_compatibility(mock_check_helm_cli, mock_sys, mock_os, mock_gettempdir, mock_path):
+def test_check_marketplace_compatibility(
+    mock_check_helm_cli, mock_sys, mock_os, mock_gettempdir, mock_path
+):
     """Test check_marketplace_compatibility function."""
     mock_check_helm_cli.return_value = True
-    
+
     mock_sys.stdin.isatty.return_value = False
     mock_sys.stdout.isatty.return_value = False
     mock_os.environ.get.return_value = None
-    
+
     mock_gettempdir.return_value = "/tmp"
     mock_temp_file = mock.MagicMock()
     mock_path.return_value.__truediv__.return_value = mock_temp_file
-    
+
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
     assert "smithery" in compat
@@ -499,24 +510,30 @@ def test_check_marketplace_compatibility(mock_check_helm_cli, mock_sys, mock_os,
 @mock.patch("tempfile.gettempdir")
 @mock.patch("mcp_chart_scanner.server.mcp_server.os")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
-def test_check_marketplace_compatibility_python_version(mock_check_helm_cli, mock_os, mock_gettempdir, mock_path):
+def test_check_marketplace_compatibility_python_version(
+    mock_check_helm_cli, mock_os, mock_gettempdir, mock_path
+):
     """Test check_marketplace_compatibility function with different Python versions."""
     mock_check_helm_cli.return_value = True
-    
+
     mock_gettempdir.return_value = "/tmp"
     mock_temp_file = mock.MagicMock()
     mock_path.return_value.__truediv__.return_value = mock_temp_file
-    
-    with mock.patch("sys.version_info", new=type('obj', (object,), {'major': 3, 'minor': 7})):
+
+    with mock.patch(
+        "sys.version_info", new=type("obj", (object,), {"major": 3, "minor": 7})
+    ):
         compat = check_marketplace_compatibility()
         assert compat["cursor"] is False
         assert "Python version 3.7 not supported" in compat["reasons"][0]
-    
-    with mock.patch("sys.version_info", new=type('obj', (object,), {'major': 3, 'minor': 8})):
+
+    with mock.patch(
+        "sys.version_info", new=type("obj", (object,), {"major": 3, "minor": 8})
+    ):
         compat = check_marketplace_compatibility()
         assert compat["cursor"] is True
         assert len(compat["reasons"]) == 0
-    
+
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
     assert len(compat["reasons"]) == 0
@@ -525,21 +542,23 @@ def test_check_marketplace_compatibility_python_version(mock_check_helm_cli, moc
 @mock.patch("mcp_chart_scanner.server.mcp_server.os")
 @mock.patch("mcp_chart_scanner.server.mcp_server.sys")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
-def test_check_marketplace_compatibility_cursor_env(mock_check_helm_cli, mock_sys, mock_os):
+def test_check_marketplace_compatibility_cursor_env(
+    mock_check_helm_cli, mock_sys, mock_os
+):
     """Test check_marketplace_compatibility in Cursor environment."""
     mock_check_helm_cli.return_value = True
-    
+
     mock_sys.stdin.isatty.return_value = False
     mock_sys.stdout.isatty.return_value = False
     mock_os.environ.get.return_value = None
-    
+
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
-    
+
     mock_sys.stdin.isatty.return_value = True
     mock_sys.stdout.isatty.return_value = True
     mock_os.environ.get.return_value = "cursor-env"
-    
+
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
 
@@ -547,21 +566,23 @@ def test_check_marketplace_compatibility_cursor_env(mock_check_helm_cli, mock_sy
 @mock.patch("pathlib.Path")
 @mock.patch("tempfile.gettempdir")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
-def test_check_marketplace_compatibility_filesystem(mock_check_helm_cli, mock_gettempdir, mock_path):
+def test_check_marketplace_compatibility_filesystem(
+    mock_check_helm_cli, mock_gettempdir, mock_path
+):
     """Test check_marketplace_compatibility with filesystem access issues."""
     mock_check_helm_cli.return_value = True
     mock_gettempdir.return_value = "/tmp"
-    
+
     mock_temp_file = mock.MagicMock()
     mock_path.return_value.__truediv__.return_value = mock_temp_file
-    
+
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
     mock_temp_file.touch.assert_called_once()
     mock_temp_file.unlink.assert_called_once()
-    
+
     mock_temp_file.reset_mock()
-    
+
     mock_temp_file.touch.side_effect = IOError("Permission denied")
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is False

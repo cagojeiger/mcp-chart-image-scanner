@@ -97,15 +97,15 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
     except ImportError as e:
         compatibility["cursor"] = False
         compatibility["reasons"].append(f"Required package missing: {str(e)}")
-        
+
     # Check stdio transport compatibility
     is_stdio_mode = not sys.stdin.isatty() and not sys.stdout.isatty()
     is_cursor_env = os.environ.get("CURSOR_CONTEXT") is not None
-    
+
     # For testing purposes, we don't add this as a reason that affects compatibility
     if not is_stdio_mode and not is_cursor_env:
         pass  # We don't add a reason here as it's just informational
-        
+
     try:
         test_file = pathlib.Path(tempfile.gettempdir()) / "cursor_test_file"
         test_file.touch()
