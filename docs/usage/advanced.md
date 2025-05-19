@@ -2,23 +2,6 @@
 
 이 문서는 MCP Chart Image Scanner의 고급 사용 예제를 제공합니다.
 
-## MCP 서버와 Smithery.ai 사용하기
-
-MCP Chart Image Scanner는 Smithery.ai 마켓플레이스와 호환됩니다. 서버를 Smithery.ai에 배포하고 AI 도구와 함께 사용할 수 있습니다.
-
-### 배포 단계
-
-1. Docker 이미지 빌드:
-   ```bash
-   docker build -t <registry>/mcp-chart-scanner:latest .
-   ```
-
-2. 레지스트리에 이미지 푸시:
-   ```bash
-   docker push <registry>/mcp-chart-scanner:latest
-   ```
-
-3. Smithery.ai 문서에 따라 배포합니다.
 
 ## 사용자 정의 클라이언트와 MCP 서버 사용하기
 

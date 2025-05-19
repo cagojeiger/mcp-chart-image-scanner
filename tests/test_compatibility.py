@@ -11,7 +11,6 @@ def test_check_marketplace_compatibility(mock_check_helm_cli):
     mock_check_helm_cli.return_value = True
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
-    assert "smithery" in compat
     assert len(compat["reasons"]) == 0
 
     mock_check_helm_cli.return_value = False
@@ -84,11 +83,9 @@ def test_check_marketplace_compatibility_filesystem(mock_check_helm_cli):
 
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is True
-    assert "smithery" in compat
     assert len(compat["reasons"]) == 0
 
     mock_check_helm_cli.return_value = False
     compat = check_marketplace_compatibility()
     assert compat["cursor"] is False
-    assert compat["smithery"] is False
     assert "Helm CLI not installed" in compat["reasons"]

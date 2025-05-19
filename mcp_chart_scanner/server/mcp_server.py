@@ -69,11 +69,10 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
     Returns:
         Dictionary of marketplace compatibility status
     """
-    compatibility = {"cursor": True, "smithery": True, "reasons": []}
+    compatibility = {"cursor": True, "reasons": []}
 
     if not check_helm_cli():
         compatibility["cursor"] = False
-        compatibility["smithery"] = False
         compatibility["reasons"].append("Helm CLI not installed")
 
     # Check Python version compatibility
@@ -84,7 +83,6 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
         python_version.major == 3 and python_version.minor < 8
     ):
         compatibility["cursor"] = False
-        compatibility["smithery"] = False
         compatibility["reasons"].append(
             f"Python version {python_version.major}.{python_version.minor} not supported (min 3.8)"
         )
@@ -94,7 +92,6 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
         import requests  # noqa: F401
     except ImportError as e:
         compatibility["cursor"] = False
-        compatibility["smithery"] = False
         compatibility["reasons"].append(f"Required package missing: {str(e)}")
 
     return compatibility
