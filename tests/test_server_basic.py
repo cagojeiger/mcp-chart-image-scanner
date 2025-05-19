@@ -7,13 +7,13 @@ from fastmcp import FastMCP
 from mcp_chart_scanner.server.mcp_server import mcp, parse_args
 
 
-def test_mcp_server_initialization():
+def test_mcp_server_initialization() -> None:
     """Test MCP server initialization."""
     assert isinstance(mcp, FastMCP)
     assert mcp.name == "Chart Image Scanner"
 
 
-def test_parse_args():
+def test_parse_args() -> None:
     """Test parse_args function."""
     with mock.patch("sys.argv", ["chart-scanner-server"]):
         args = parse_args()

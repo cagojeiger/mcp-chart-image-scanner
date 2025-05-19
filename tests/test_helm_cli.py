@@ -6,7 +6,7 @@ from mcp_chart_scanner.server.mcp_server import check_helm_cli
 
 
 @mock.patch("subprocess.run")
-def test_check_helm_cli_success(mock_run):
+def test_check_helm_cli_success(mock_run: mock.MagicMock) -> None:
     """Test check_helm_cli function when Helm CLI is installed."""
     mock_process = mock.MagicMock()
     mock_process.stdout = "version.BuildInfo"
@@ -25,7 +25,7 @@ def test_check_helm_cli_success(mock_run):
 
 
 @mock.patch("subprocess.run")
-def test_check_helm_cli_failure(mock_run):
+def test_check_helm_cli_failure(mock_run: mock.MagicMock) -> None:
     """Test check_helm_cli function when Helm CLI is not installed."""
     mock_run.side_effect = FileNotFoundError("No such file or directory: 'helm'")
 

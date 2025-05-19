@@ -13,7 +13,7 @@ import tarfile
 import tempfile
 from typing import Any, List, Optional, Set, Union
 
-import yaml
+import yaml  # type: ignore
 
 logging.basicConfig(
     level=logging.INFO,

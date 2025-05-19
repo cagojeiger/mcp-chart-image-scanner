@@ -11,7 +11,9 @@ from mcp_chart_scanner.server.mcp_server import scan_chart_path, scan_chart_url
 
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
-async def test_scan_chart_path_file_not_found(mock_extract_images):
+async def test_scan_chart_path_file_not_found(
+    mock_extract_images: mock.MagicMock,
+) -> None:
     """Test scan_chart_path function with non-existent path."""
     mock_ctx = mock.AsyncMock()
 
@@ -29,7 +31,9 @@ async def test_scan_chart_path_file_not_found(mock_extract_images):
 
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.requests.get")
-async def test_scan_chart_url_request_exception(mock_requests_get):
+async def test_scan_chart_url_request_exception(
+    mock_requests_get: mock.MagicMock,
+) -> None:
     """Test scan_chart_url function with request exception."""
     mock_requests_get.side_effect = requests.RequestException("Connection error")
     mock_ctx = mock.AsyncMock()
@@ -45,7 +49,7 @@ async def test_scan_chart_url_request_exception(mock_requests_get):
 
 
 @pytest.mark.asyncio
-async def test_scan_chart_url_invalid_url_format():
+async def test_scan_chart_url_invalid_url_format() -> None:
     """Test scan_chart_url function with invalid URL format."""
     mock_ctx = mock.AsyncMock()
 
@@ -63,7 +67,9 @@ async def test_scan_chart_url_invalid_url_format():
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
-async def test_scan_chart_path_invalid_format(mock_exists, mock_extract_images):
+async def test_scan_chart_path_invalid_format(
+    mock_exists: mock.MagicMock, mock_extract_images: mock.MagicMock
+) -> None:
     """Test scan_chart_path with invalid chart format."""
     mock_exists.return_value = True
     mock_extract_images.side_effect = ValueError("Unsupported chart format")
@@ -84,7 +90,9 @@ async def test_scan_chart_path_invalid_format(mock_exists, mock_extract_images):
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
-async def test_scan_chart_path_values_file_not_found(mock_exists, mock_extract_images):
+async def test_scan_chart_path_values_file_not_found(
+    mock_exists: mock.MagicMock, mock_extract_images: mock.MagicMock
+) -> None:
     """Test scan_chart_path with non-existent values file."""
     mock_exists.return_value = True
     mock_extract_images.side_effect = FileNotFoundError("Values file not found")
@@ -104,7 +112,9 @@ async def test_scan_chart_path_values_file_not_found(mock_exists, mock_extract_i
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
-async def test_scan_chart_path_helm_cli_error(mock_exists, mock_extract_images):
+async def test_scan_chart_path_helm_cli_error(
+    mock_exists: mock.MagicMock, mock_extract_images: mock.MagicMock
+) -> None:
     """Test scan_chart_path with Helm CLI error."""
     mock_exists.return_value = True
     mock_extract_images.side_effect = subprocess.CalledProcessError(1, "helm template")
@@ -123,7 +133,9 @@ async def test_scan_chart_path_helm_cli_error(mock_exists, mock_extract_images):
 @pytest.mark.asyncio
 @mock.patch("mcp_chart_scanner.server.mcp_server.extract_images_from_chart")
 @mock.patch("os.path.exists")
-async def test_scan_chart_path_missing_chart_yaml(mock_exists, mock_extract_images):
+async def test_scan_chart_path_missing_chart_yaml(
+    mock_exists: mock.MagicMock, mock_extract_images: mock.MagicMock
+) -> None:
     """Test scan_chart_path function with missing Chart.yaml."""
     mock_extract_images.side_effect = ValueError("Not a valid Helm chart directory")
 

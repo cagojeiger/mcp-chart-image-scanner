@@ -6,7 +6,8 @@ import os
 import sys
 import tempfile
 from importlib import metadata
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import requests
 from fastmcp import Context, FastMCP
@@ -34,7 +35,9 @@ ERROR_HELM_INSTALL_GUIDE = "Helm CLI 설치 방법: https://helm.sh/docs/intro/i
 
 
 async def log_and_raise(
-    error_msg: str, ctx: Optional[Context] = None, exception_type=Exception
+    error_msg: str,
+    ctx: Optional[Context] = None,
+    exception_type: type[Exception] = Exception,
 ) -> None:
     """Log an error message to the context and raise an exception.
 
@@ -63,17 +66,18 @@ def get_version() -> str:
         return "unknown"
 
 
-def check_marketplace_compatibility() -> Dict[str, bool]:
+def check_marketplace_compatibility() -> Dict[str, object]:
     """Check compatibility with different marketplaces.
 
     Returns:
         Dictionary of marketplace compatibility status
     """
-    compatibility = {"cursor": True, "reasons": []}
+    compatibility: Dict[str, object] = {"cursor": True, "reasons": []}
 
     if not check_helm_cli():
         compatibility["cursor"] = False
-        compatibility["reasons"].append("Helm CLI not installed")
+        if isinstance(compatibility["reasons"], list):
+            compatibility["reasons"].append("Helm CLI not installed")
 
     # Check Python version compatibility
     import sys
@@ -83,16 +87,18 @@ def check_marketplace_compatibility() -> Dict[str, bool]:
         python_version.major == 3 and python_version.minor < 8
     ):
         compatibility["cursor"] = False
-        compatibility["reasons"].append(
-            f"Python version {python_version.major}.{python_version.minor} not supported (min 3.8)"
-        )
+        if isinstance(compatibility["reasons"], list):
+            compatibility["reasons"].append(
+                f"Python version {python_version.major}.{python_version.minor} not supported (min 3.8)"
+            )
 
     try:
         import fastmcp  # noqa: F401
         import requests  # noqa: F401
     except ImportError as e:
         compatibility["cursor"] = False
-        compatibility["reasons"].append(f"Required package missing: {str(e)}")
+        if isinstance(compatibility["reasons"], list):
+            compatibility["reasons"].append(f"Required package missing: {str(e)}")
 
     return compatibility
 
@@ -140,9 +146,9 @@ def get_usage() -> str:
 @mcp.tool()
 async def scan_chart_path(
     path: str,
-    values_files: Optional[List[str]] = None,
+    values_files: Optional[List[Union[str, Path]]] = None,
     normalize: bool = True,
-    ctx: Context = None,
+    ctx: Optional[Context] = None,
 ) -> List[str]:
     """Scan a local Helm chart for Docker images.
 
@@ -195,10 +201,10 @@ async def scan_chart_path(
 @mcp.tool()
 async def scan_chart_url(
     url: str,
-    values_files: Optional[List[str]] = None,
+    values_files: Optional[List[Union[str, Path]]] = None,
     normalize: bool = True,
     timeout: int = 30,
-    ctx: Context = None,
+    ctx: Optional[Context] = None,
 ) -> List[str]:
     """Scan a Helm chart from a URL.
 

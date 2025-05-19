@@ -6,7 +6,7 @@ import pytest
 from mcp_chart_scanner.extract import extract_chart
 
 
-def test_extract_chart_rejects_outside_members(tmp_path):
+def test_extract_chart_rejects_outside_members(tmp_path: pytest.FixtureRequest) -> None:
     tar_path = tmp_path / "evil.tgz"
     with tarfile.open(tar_path, "w:gz") as tar:
         data = b"malicious"

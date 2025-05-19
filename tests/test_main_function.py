@@ -9,8 +9,10 @@ from mcp_chart_scanner.server.mcp_server import main
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
 @mock.patch("mcp_chart_scanner.server.mcp_server.parse_args")
 def test_main_helm_cli_not_installed(
-    mock_parse_args, mock_check_helm_cli, mock_mcp_run
-):
+    mock_parse_args: mock.MagicMock,
+    mock_check_helm_cli: mock.MagicMock,
+    mock_mcp_run: mock.MagicMock,
+) -> None:
     """Test main function when Helm CLI is not installed."""
     mock_args = mock.MagicMock()
     mock_args.transport = "stdio"
@@ -39,7 +41,11 @@ def test_main_helm_cli_not_installed(
 @mock.patch("mcp_chart_scanner.server.mcp_server.mcp.run")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
 @mock.patch("mcp_chart_scanner.server.mcp_server.parse_args")
-def test_main_stdio(mock_parse_args, mock_check_helm_cli, mock_mcp_run):
+def test_main_stdio(
+    mock_parse_args: mock.MagicMock,
+    mock_check_helm_cli: mock.MagicMock,
+    mock_mcp_run: mock.MagicMock,
+) -> None:
     """Test main function with stdio transport."""
     mock_args = mock.MagicMock()
     mock_args.transport = "stdio"
@@ -57,7 +63,11 @@ def test_main_stdio(mock_parse_args, mock_check_helm_cli, mock_mcp_run):
 @mock.patch("mcp_chart_scanner.server.mcp_server.sys.exit")
 @mock.patch("mcp_chart_scanner.server.mcp_server.check_helm_cli")
 @mock.patch("mcp_chart_scanner.server.mcp_server.parse_args")
-def test_main_unsupported_transport(mock_parse_args, mock_check_helm_cli, mock_exit):
+def test_main_unsupported_transport(
+    mock_parse_args: mock.MagicMock,
+    mock_check_helm_cli: mock.MagicMock,
+    mock_exit: mock.MagicMock,
+) -> None:
     """Test main function with unsupported transport."""
     mock_args = mock.MagicMock()
     mock_args.transport = "unsupported"

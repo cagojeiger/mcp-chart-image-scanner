@@ -12,8 +12,10 @@ from mcp_chart_scanner.server.mcp_server import (
 @mock.patch("mcp_chart_scanner.cli.check_helm_cli")
 @mock.patch("mcp_chart_scanner.cli.parse_cli_args")
 def test_cli_main_helm_cli_not_installed(
-    mock_parse_args, mock_check_helm_cli, mock_extract_images
-):
+    mock_parse_args: mock.MagicMock,
+    mock_check_helm_cli: mock.MagicMock,
+    mock_extract_images: mock.MagicMock,
+) -> None:
     args = mock.MagicMock()
     args.chart = pathlib.Path("chart.tgz")
     args.values = []
