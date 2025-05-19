@@ -26,23 +26,21 @@
 - Docker 이미지 사용 가이드 작성
 - 버전 관리 문서 작성
 
+### 5. 파일 처리 기능 개선
+- 테스트 실패 이슈 해결:
+  - scan_chart_path: FileNotFoundError와 ValueError 간의 불일치 해결
+  - scan_chart_url: requests.get 호출 시 timeout 매개변수 불일치 해결
+  - scan_chart_upload: mock_temp_file.write 호출 문제 해결
+  - test_scan_chart_url_request_exception: 이중 오류 로깅 문제 해결
+
+- 개선된 기능:
+  - 로컬 차트 경로 검증 강화
+  - URL 다운로드 처리 개선
+  - 업로드된 차트 데이터 검증 강화
+  - 임시 파일 관리 개선
+  - 일관된 오류 처리 패턴 적용
+
 ## 진행 중인 작업
-
-### 파일 처리 기능 개선
-현재 MCP 서버의 파일 처리 기능에 다음과 같은 문제점이 있습니다:
-
-1. **테스트 실패 이슈**:
-   - scan_chart_path: FileNotFoundError와 ValueError 간의 불일치
-   - scan_chart_url: requests.get 호출 시 timeout 매개변수 불일치
-   - scan_chart_upload: mock_temp_file.write가 호출되지 않음
-   - test_scan_chart_url_request_exception: ctx.error가 두 번 호출됨
-
-2. **개선이 필요한 영역**:
-   - 로컬 차트 경로 검증 강화
-   - URL 다운로드 처리 개선
-   - 업로드된 차트 데이터 검증 강화
-   - 임시 파일 관리 개선
-   - 일관된 오류 처리 패턴 적용
 
 ## 향후 계획
 
