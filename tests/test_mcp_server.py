@@ -95,7 +95,7 @@ async def test_scan_chart_url(mock_extract_images, mock_requests_get):
             mock.call("Downloaded chart to: temp.tgz"),
             mock.call("Found 2 images"),
         ],
-        any_order=True
+        any_order=True,
     )
     assert result == ["image1", "image2"]
 
@@ -131,7 +131,7 @@ async def test_scan_chart_upload(mock_extract_images):
             mock.call("Processing uploaded chart (10 bytes)"),
             mock.call("Found 2 images"),
         ],
-        any_order=True
+        any_order=True,
     )
     assert result == ["image1", "image2"]
 

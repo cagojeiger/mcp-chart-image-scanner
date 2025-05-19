@@ -227,7 +227,7 @@ async def scan_chart_url(
     """
     if ctx:
         await ctx.info(f"Downloading chart from URL: {url}")
-    
+
     if not url.startswith(("http://", "https://")):
         error_msg = ERROR_INVALID_URL.format(url=url)
         await log_and_raise(error_msg, ctx, ValueError)
@@ -242,14 +242,16 @@ async def scan_chart_url(
                 error_msg = ERROR_DOWNLOAD_FAILED.format(error=str(e))
                 await log_and_raise(error_msg, ctx, ValueError)
 
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
             for chunk in response.iter_content(chunk_size=8192):
                 if chunk:  # 빈 청크 필터링
                     tmp_file.write(chunk)
                     downloaded += len(chunk)
                     if total_size > 0 and ctx:
-                        progress_interval = max(1, total_size // 10)  # 0으로 나누기 방지
+                        progress_interval = max(
+                            1, total_size // 10
+                        )  # 0으로 나누기 방지
                         if downloaded % progress_interval < 8192:
                             progress = (downloaded / total_size) * 100
                             await ctx.info(f"Download progress: {progress:.1f}%")
@@ -293,7 +295,9 @@ async def scan_chart_url(
                     await ctx.info(f"Cleaned up temporary file: {chart_path}")
             except Exception as e:
                 if ctx:
-                    await ctx.warn(f"Failed to clean up temporary file {chart_path}: {str(e)}")
+                    await ctx.warn(
+                        f"Failed to clean up temporary file {chart_path}: {str(e)}"
+                    )
 
 
 @mcp.tool()
@@ -327,10 +331,12 @@ async def scan_chart_upload(
         error_msg = ERROR_EMPTY_UPLOAD
         await log_and_raise(error_msg, ctx, ValueError)
         return []  # This line will never be reached due to the exception
-        
+
     max_bytes = max_size_mb * 1024 * 1024
     if len(chart_data) > max_bytes:
-        error_msg = ERROR_DATA_TOO_LARGE.format(size=len(chart_data), max_size=max_bytes)
+        error_msg = ERROR_DATA_TOO_LARGE.format(
+            size=len(chart_data), max_size=max_bytes
+        )
         await log_and_raise(error_msg, ctx, ValueError)
         return []  # This line will never be reached due to the exception
 
@@ -340,29 +346,40 @@ async def scan_chart_upload(
             tmp_file.write(chart_data)
             tmp_file.flush()
             chart_path = tmp_file.name
-            
+
             try:
                 import tarfile
+
                 if os.path.exists(chart_path):
                     with tarfile.open(chart_path, "r:gz") as tar:
                         chart_yaml_found = False
                         for member in tar.getmembers():
-                            if member.name.endswith('Chart.yaml') or member.name.endswith('/Chart.yaml'):
+                            if member.name.endswith(
+                                "Chart.yaml"
+                            ) or member.name.endswith("/Chart.yaml"):
                                 chart_yaml_found = True
                                 break
-                        
+
                         if not chart_yaml_found:
-                            error_msg = ERROR_CHART_INVALID.format(error="Chart.yaml not found in archive")
+                            error_msg = ERROR_CHART_INVALID.format(
+                                error="Chart.yaml not found in archive"
+                            )
                             await log_and_raise(error_msg, ctx, ValueError)
                 else:
                     if "pytest" in sys.modules:
                         if ctx:
-                            await ctx.info("Skipping tarfile validation in test environment")
+                            await ctx.info(
+                                "Skipping tarfile validation in test environment"
+                            )
                     else:
-                        error_msg = ERROR_FILE_NOT_FOUND.format(error=f"Chart file not found: {chart_path}")
+                        error_msg = ERROR_FILE_NOT_FOUND.format(
+                            error=f"Chart file not found: {chart_path}"
+                        )
                         await log_and_raise(error_msg, ctx, FileNotFoundError)
             except tarfile.ReadError as e:
-                error_msg = ERROR_CHART_INVALID.format(error=f"Invalid archive format: {str(e)}")
+                error_msg = ERROR_CHART_INVALID.format(
+                    error=f"Invalid archive format: {str(e)}"
+                )
                 await log_and_raise(error_msg, ctx, ValueError)
 
         images = extract_images_from_chart(
@@ -391,7 +408,9 @@ async def scan_chart_upload(
                     await ctx.info(f"Cleaned up temporary file: {chart_path}")
             except Exception as e:
                 if ctx:
-                    await ctx.warn(f"Failed to clean up temporary file {chart_path}: {str(e)}")
+                    await ctx.warn(
+                        f"Failed to clean up temporary file {chart_path}: {str(e)}"
+                    )
 
 
 def parse_args() -> argparse.Namespace:
