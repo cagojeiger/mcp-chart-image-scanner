@@ -1,6 +1,23 @@
-# MCP 서버
+# MCP 서버 사용 가이드
 
-MCP Chart Image Scanner는 Helm 차트에서 Docker 이미지를 추출하기 위한 Model Context Protocol(MCP) 서버를 제공합니다.
+이 문서는 Chart Image Scanner의 MCP(Model Context Protocol) 서버 사용 방법을 설명합니다.
+
+## 기능 개요
+
+MCP 서버는 Helm 차트에서 Docker 이미지를 추출하는 도구를 MCP 프로토콜을 통해 제공합니다. 다음 기능을 지원합니다:
+
+- 로컬 Helm 차트 파일(.tgz) 또는 디렉토리에서 이미지 추출
+- URL에서 Helm 차트 다운로드 및 이미지 추출
+- 업로드된 Helm 차트 데이터에서 이미지 추출
+
+## 오류 처리 기능
+
+서버는 다양한 오류 상황을 처리하고 상세한 오류 메시지를 제공합니다:
+
+- 파일 존재 여부 검증: 지정된 경로에 차트 파일이 존재하지 않는 경우
+- URL 다운로드 오류: 네트워크 연결 실패, 서버 응답 오류 등
+- 업로드 데이터 검증: 빈 데이터, 손상된 데이터 등
+- Helm CLI 검증: Helm CLI가 설치되어 있지 않은 경우
 
 ## 설치
 
