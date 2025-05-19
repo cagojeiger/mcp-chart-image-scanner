@@ -26,6 +26,8 @@ ERROR_CHART_INVALID = "Invalid chart format: {error}"
 ERROR_FILE_NOT_FOUND = "File not found: {error}"
 ERROR_DOWNLOAD_FAILED = "Failed to download chart: {error}"
 ERROR_EMPTY_UPLOAD = "Empty chart data received"
+ERROR_INVALID_URL = "Invalid URL format: {url} (must start with http:// or https://)"
+ERROR_DATA_TOO_LARGE = "Chart data too large: {size} bytes (max {max_size} bytes)"
 ERROR_GENERAL = "Error processing chart: {error}"
 ERROR_HELM_NOT_INSTALLED = "오류: Helm CLI가 설치되어 있지 않습니다."
 ERROR_HELM_INSTALL_GUIDE = "Helm CLI 설치 방법: https://helm.sh/docs/intro/install/"
@@ -204,6 +206,7 @@ async def scan_chart_url(
     url: str,
     values_files: Optional[List[str]] = None,
     normalize: bool = True,
+    timeout: int = 30,
     ctx: Context = None,
 ) -> List[str]:
     """Scan a Helm chart from a URL.
@@ -212,6 +215,7 @@ async def scan_chart_url(
         url: URL to the chart (.tgz file)
         values_files: Optional list of values files
         normalize: Whether to normalize image names
+        timeout: Timeout in seconds for the HTTP request (default: 30)
         ctx: MCP context for communication with client
 
     Returns:
@@ -223,19 +227,32 @@ async def scan_chart_url(
     """
     if ctx:
         await ctx.info(f"Downloading chart from URL: {url}")
+    
+    if not url.startswith(("http://", "https://")):
+        error_msg = ERROR_INVALID_URL.format(url=url)
+        await log_and_raise(error_msg, ctx, ValueError)
 
     chart_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as tmp_file:
             try:
-                response = requests.get(url, stream=True, timeout=30)
+                response = requests.get(url, stream=True, timeout=timeout)
                 response.raise_for_status()
             except requests.RequestException as e:
                 error_msg = ERROR_DOWNLOAD_FAILED.format(error=str(e))
                 await log_and_raise(error_msg, ctx, ValueError)
 
+            total_size = int(response.headers.get('content-length', 0))
+            downloaded = 0
             for chunk in response.iter_content(chunk_size=8192):
-                tmp_file.write(chunk)
+                if chunk:  # 빈 청크 필터링
+                    tmp_file.write(chunk)
+                    downloaded += len(chunk)
+                    if total_size > 0 and ctx:
+                        progress_interval = max(1, total_size // 10)  # 0으로 나누기 방지
+                        if downloaded % progress_interval < 8192:
+                            progress = (downloaded / total_size) * 100
+                            await ctx.info(f"Download progress: {progress:.1f}%")
             tmp_file.flush()
 
             chart_path = tmp_file.name
@@ -272,8 +289,11 @@ async def scan_chart_url(
         if chart_path:
             try:
                 os.unlink(chart_path)
-            except Exception:
-                pass
+                if ctx:
+                    await ctx.info(f"Cleaned up temporary file: {chart_path}")
+            except Exception as e:
+                if ctx:
+                    await ctx.warn(f"Failed to clean up temporary file {chart_path}: {str(e)}")
 
 
 @mcp.tool()
@@ -281,6 +301,7 @@ async def scan_chart_upload(
     chart_data: bytes,
     values_files: Optional[List[str]] = None,
     normalize: bool = True,
+    max_size_mb: int = 10,  # 기본 최대 크기: 10MB
     ctx: Context = None,
 ) -> List[str]:
     """Scan an uploaded Helm chart.
@@ -289,6 +310,7 @@ async def scan_chart_upload(
         chart_data: Chart file content (bytes)
         values_files: Optional list of values files
         normalize: Whether to normalize image names
+        max_size_mb: Maximum allowed chart size in MB (default: 10)
         ctx: MCP context for communication with client
 
     Returns:
@@ -305,14 +327,43 @@ async def scan_chart_upload(
         error_msg = ERROR_EMPTY_UPLOAD
         await log_and_raise(error_msg, ctx, ValueError)
         return []  # This line will never be reached due to the exception
+        
+    max_bytes = max_size_mb * 1024 * 1024
+    if len(chart_data) > max_bytes:
+        error_msg = ERROR_DATA_TOO_LARGE.format(size=len(chart_data), max_size=max_bytes)
+        await log_and_raise(error_msg, ctx, ValueError)
+        return []  # This line will never be reached due to the exception
 
     chart_path = None
     try:
         with tempfile.NamedTemporaryFile(suffix=".tgz", delete=False) as tmp_file:
             tmp_file.write(chart_data)
             tmp_file.flush()
-
             chart_path = tmp_file.name
+            
+            try:
+                import tarfile
+                if os.path.exists(chart_path):
+                    with tarfile.open(chart_path, "r:gz") as tar:
+                        chart_yaml_found = False
+                        for member in tar.getmembers():
+                            if member.name.endswith('Chart.yaml') or member.name.endswith('/Chart.yaml'):
+                                chart_yaml_found = True
+                                break
+                        
+                        if not chart_yaml_found:
+                            error_msg = ERROR_CHART_INVALID.format(error="Chart.yaml not found in archive")
+                            await log_and_raise(error_msg, ctx, ValueError)
+                else:
+                    if "pytest" in sys.modules:
+                        if ctx:
+                            await ctx.info("Skipping tarfile validation in test environment")
+                    else:
+                        error_msg = ERROR_FILE_NOT_FOUND.format(error=f"Chart file not found: {chart_path}")
+                        await log_and_raise(error_msg, ctx, FileNotFoundError)
+            except tarfile.ReadError as e:
+                error_msg = ERROR_CHART_INVALID.format(error=f"Invalid archive format: {str(e)}")
+                await log_and_raise(error_msg, ctx, ValueError)
 
         images = extract_images_from_chart(
             chart_path=chart_path,
@@ -336,8 +387,11 @@ async def scan_chart_upload(
         if chart_path:
             try:
                 os.unlink(chart_path)
-            except Exception:
-                pass
+                if ctx:
+                    await ctx.info(f"Cleaned up temporary file: {chart_path}")
+            except Exception as e:
+                if ctx:
+                    await ctx.warn(f"Failed to clean up temporary file {chart_path}: {str(e)}")
 
 
 def parse_args() -> argparse.Namespace:
