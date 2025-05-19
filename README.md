@@ -46,11 +46,6 @@ pip install -e .
 }
 ```
 
-### Using Docker
-
-```bash
-docker pull <registry>/mcp-chart-scanner:latest
-```
 
 ## Usage
 
