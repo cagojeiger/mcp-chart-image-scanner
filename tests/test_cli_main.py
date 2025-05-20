@@ -2,10 +2,7 @@ import pathlib
 from unittest import mock
 
 from mcp_chart_scanner.cli import main
-from mcp_chart_scanner.server.mcp_server import (
-    ERROR_HELM_INSTALL_GUIDE,
-    ERROR_HELM_NOT_INSTALLED,
-)
+from mcp_chart_scanner.utils import ERROR_HELM_INSTALL_GUIDE, ERROR_HELM_NOT_INSTALLED
 
 
 @mock.patch("mcp_chart_scanner.cli.extract_images_from_chart")
