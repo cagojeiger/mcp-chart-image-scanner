@@ -7,7 +7,7 @@ import pathlib
 import sys
 
 from mcp_chart_scanner.extract import extract_images_from_chart
-from mcp_chart_scanner.server.mcp_server import (
+from mcp_chart_scanner.utils import (
     ERROR_HELM_INSTALL_GUIDE,
     ERROR_HELM_NOT_INSTALLED,
     check_helm_cli,
