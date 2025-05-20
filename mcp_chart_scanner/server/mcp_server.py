@@ -249,9 +249,7 @@ async def scan_chart_url(
                     tmp_file.write(chunk)
                     downloaded += len(chunk)
                     if total_size > 0 and ctx:
-                        progress_interval = max(
-                            1, total_size // 10
-                        )  # 0으로 나누기 방지
+                        progress_interval = max(1, total_size // 10)  # 0으로 나누기 방지
                         if downloaded % progress_interval < 8192:
                             progress = (downloaded / total_size) * 100
                             await ctx.info(f"Download progress: {progress:.1f}%")
@@ -322,30 +320,6 @@ def parse_args() -> argparse.Namespace:
         help="Suppress log messages",
     )
     return parser.parse_args()
-
-
-def check_helm_cli() -> bool:
-    """Check if Helm CLI is installed.
-
-    Returns:
-        True if Helm CLI is installed, False otherwise
-    """
-    try:
-        import subprocess
-
-        process = subprocess.run(
-            ["helm", "version"],
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        version_info = process.stdout.strip()
-        logger.info(f"Helm CLI detected: {version_info}")
-        return True
-    except (subprocess.SubprocessError, FileNotFoundError) as e:
-        logger.error(f"Helm CLI check failed: {str(e)}")
-        return False
 
 
 def main() -> None:
